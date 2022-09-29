@@ -1,0 +1,11 @@
+{
+  "name": "owot-js",
+  "version": "1.0.0",
+  "description": "bot lib",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["owot-js", "ourworldoftext"],
+  "author": "scar"
+}
