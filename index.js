@@ -1,11 +1,7 @@
 const EventEmitter = require("events");
 const WebSocket = require("ws");
 const Chalk = require("chalk");
-/* Example
-const OWOTjs = require('owot-js');
-var bot = new OWOTjs(<object> options);
-bot.world.connect(<string> world);
-*/
+
 class OWOTjs {
 	constructor(options = {}){
 		var ws;
@@ -37,11 +33,12 @@ class OWOTjs {
 				if(ws.readyState !== 1) return;
 				ws.send(JSON.stringify({
 					kind: "chat",
-					nickname: "",
+					nickname: OTS.player.nickname,
 					message: "/nick "+nickname,
 					location: "page",
 					color: OTS.options.color
 				}));
+				OTS.player.nickname = nickname
 			},
 			send: (message, globalChat) => {
 				if(ws.readyState !== 1) return;
@@ -49,7 +46,7 @@ class OWOTjs {
 				if(globalChat == true) {chat = "global"} else if(globalChat == false) {chat = "page"} else {chat = "page"};
 				ws.send(JSON.stringify({
 					kind: "chat",
-					nickname: "",
+					nickname: OTS.player.nickname,
 					message: message,
 					location: chat,
 					color: OTS.options.color
@@ -140,7 +137,7 @@ class OWOTjs {
 			    return pos;
 			},
 			log: (toLog) => {
-				if(!OTS.options.nolog) console.log(Chalk.green(toLog));
+				if(OTS.options.log) console.log(Chalk.green(toLog));
 			}
 		};
 	};
