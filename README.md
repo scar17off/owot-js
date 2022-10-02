@@ -2,7 +2,7 @@
 
 ## Installing
 `npm i owot-js`
-REQUIRES NODE.JS 12.0+!
+REQUIRES NODE.JS 12.0+!  
 ![Nodejs](https://img.shields.io/badge/-Node.js%2012.0%2B-brightgreen?style=for-the-badge&logo=node.js&labelColor=1a1a1a)
 # Example
 ```js
