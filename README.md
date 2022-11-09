@@ -8,8 +8,12 @@ REQUIRES NODE.JS 12.0+!
 ```js
 const OWOTjs = require('owot-js');
 
-var bot = new OWOTjs(<object> options);
+var bot = new OWOTjs.Client(<object> options);
 bot.world.connect(<string> world);
+
+bot.on('join', () => {
+    bot.chat.send('Hello World!');
+});
 ```
 # Events
 `connect` - connecting to websocket  
