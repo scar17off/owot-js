@@ -28,7 +28,7 @@ bot.on("join", () => {
 `token` - uvias token
 # Module
 ### Requiring the library returns an object with:  
-`Client` - main OJS Client class  
+`Client` - main OTS Client class  
 `Tiles` - Bucket class for quota  
 `TileSystem` - Class for tiles, char management
 # API
