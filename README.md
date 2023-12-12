@@ -9,23 +9,85 @@ REQUIRES NODE.JS 12.0+!
 const OWOTjs = require('owot-js');
 
 var bot = new OWOTjs.Client(<object> options);
-bot.world.connect(<string> world);
 
-bot.on('join', () => {
+bot.on("join", () => {
     bot.chat.send('Hello World!');
 });
 ```
 # Events
-`connect` - connecting to websocket  
-`join` - joined  
-`chat` - new message [message Object]  
-`tileUpdate` - tile updates [updates]  
-`close` - websocket closed  
-`disconnect` - websocket closed (by server)
+`open` - WebSocket opened  
+`close` - WebSocket closed  
+`chat` - New message in chat [message Object]  
+`tileUpdate` - New tile updates [updates]  
+`id` - Got id [id, channel]
 # Options
 `origin` - origin (default: `https://ourworldoftext.com/`)  
 `ws` - ws url (default: `wss://ourworldoftext.com/ws/`)  
 `nickname` - client nickname  
-`world` - world  
-`color` - color  
-`log` - logging events
+`world` - world  (default: `main`)  
+`token` - uvias token
+# Module
+### Requiring the library returns an object with:  
+`Client` - main OJS Client class  
+`Tiles` - Bucket class for quota  
+`TileSystem` - Class for tiles, char management
+# API
+## Client
+
+### Client.player
+- `nickname`
+- `color`
+- `id`
+- `channel`
+- `tileX`
+- `tileY`
+- `charX`
+- `charY`
+
+### Client.chat
+#### **Client.chat.send(msg)**
+Send message in chat
+
+### Client.world
+#### **Client.world.getTile(tileX, tileY)**
+Get tile data.
+#### **Client.world.getChar(tileX, tileY, charX, charY)**
+Get tile data.
+#### **Client.world.getCharXY(charX, charY)**
+Get char by XY
+#### **Client.world.requestRectangle(minX, minY, maxX, maxY)**
+Request rectangle area and store characters to TileSystem
+#### **Client.world.requestTileXY(tileX, tileY)**
+Request tile by XY and store characters to TileSystem
+#### **Client.world.move(tileX, tileY, charX, charY)**
+Move client to position
+#### **Client.world.moveXY(charX, charY)**
+Move client to char XY
+#### **Client.world.writeChar(char, color, tileX, tileY, charX, charY)**
+Write character
+#### **Client.world.writeCharXY(char, color, charX, charY)**
+Write character to XY
+#### **Client.world.protectTile(type, tileX, tileY)**
+Protect tile. You need to be an owner to use this
+#### **Client.world.leave()**
+Leave world
+#### **Client.world.userCount**
+Users in world
+
+### Client.util
+#### **Client.util.rgbToInt(r, g, b)**
+Convert rgb to int
+#### **Client.util.convertXY(x, y)**
+Convert char XY to position
+#### **Client.util.getCursorPosition()**
+Get current cursor position. Browser only
+
+### TileSystem
+#### **TileSystem.wrapStringTo16x16(inputString)**
+Wrap string to 16x16 grid
+#### **TileSystem.getChar(x, y, chunk)**
+Get char at XY in specified tile data
+#### **TileSystem.getTile(tileX, tileY)**
+Get tile data
+#### TileSystem.tiles
+Object of every loaded tile
