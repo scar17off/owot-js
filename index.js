@@ -144,13 +144,13 @@ class Client extends EventEmitter {
 				return Tiles.chunks[`${tileX},${tileY}`][charX][charY];
 			},
 			getCharXY: (charX, charY) => {
-				const position = this.util.convertXY(charX, charY);
-				const tilePosition = `${position[0]},${position[1]}`;
+				const [tileY, tileX] = this.util.convertXY(charX, charY);
+				const tilePosition = `${tileX},${tileY}`;
 
 				if (!Tiles.chunks[tilePosition])
 					requestTileXY(tilePosition);
 
-				return Tiles.chunks[tilePosition][position[2]][position[3]];
+				return Tiles.chunks[tilePosition][charX][charY];
 			},
 			requestRectangle: (minX, minY, maxX, maxY) => {
 				if (this.net.ws.readyState !== 1) return false;
@@ -191,16 +191,11 @@ class Client extends EventEmitter {
 			moveXY: (charX = 0, charY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
 
-				const position = this.util.convertXY(charX, charY);
+				const [tileY, tileX] = this.util.convertXY(charX, charY);
 
 				this.net.ws.send(JSON.stringify({
 					kind: "cursor",
-					position: {
-						tileX: position[1],
-						tileY: position[0],
-						charX: position[3],
-						charY: position[2]
-					},
+					position: { tileX, tileY, charX, charY },
 					channel: this.player.channel
 				}));
 
@@ -236,17 +231,17 @@ class Client extends EventEmitter {
 				if (this.net.ws.readyState !== 1) return false;
 				if (color) this.player.color = color;
 
-				const position = this.util.convertXY(charX, charY);
-				if (Tiles.getChar(position[0], position[1], position[2], position[3]) == char) return false;
+				const [tileY, tileX] = this.util.convertXY(charX, charY);
+				if (Tiles.getChar(tileX, tileY, charX, charY) == char) return false;
 
 				this.net.ws.send(JSON.stringify({
 					"kind": "write",
 					"edits": [
 						[
-							position[1],
-							position[0],
-							position[3],
-							position[2],
+							tileX,
+							tileY,
+							charX,
+							charY,
 							this.player.color,
 							char,
 							1 // sequence (not sure if it's necessary)
@@ -319,11 +314,11 @@ class Client extends EventEmitter {
 			writeStringXY: (str, color, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
 
-				const position = this.util.convertXY(charX, charY);
-				const startTileX = position[1];
-				const startTileY = position[0];
-				const startCharX = position[3];
-				const startCharY = position[2];
+				const [tileY, tileX] = this.util.convertXY(charX, charY);
+				const startTileX = tileX;
+				const startTileY = tileY;
+				const startCharX = charX;
+				const startCharY = charY;
 			
 				const edits = [];
 				let currentTileX = startTileX;
