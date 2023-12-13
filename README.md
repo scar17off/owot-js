@@ -19,7 +19,7 @@ bot.on("join", () => {
 `close` - WebSocket closed  
 `chat` - New message in chat [message Object]  
 `tileUpdate` - New tile updates [updates]  
-`id` - Got id [id, channel]
+`join` - Joined and got id [id, channel]
 # Options
 `origin` - origin (default: `https://ourworldoftext.com/`)  
 `ws` - ws url (default: `wss://ourworldoftext.com/ws/`)  

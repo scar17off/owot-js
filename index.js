@@ -150,7 +150,7 @@ class Client extends EventEmitter {
 				this.player.id = data.id;
 				this.player.channel = data.channel;
 
-				this.emit("id", data.id, data.channel);
+				this.emit("join", data.id, data.channel);
 			};
 		};
 		this.net.ws.onclose = () => {
