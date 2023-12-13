@@ -178,12 +178,12 @@ class Client extends EventEmitter {
 			}
 		};
 		this.world = {
+			userCount: 0,
 			leave: () => {
 				if (this.net.ws.readyState !== 1) return;
 				this.net.ws.close();
 				this.emit("close");
 			},
-			userCount: 0,
 			getTile: (tileX, tileY) => {
 				return Tiles.chunks[`${tileX},${tileY}`];
 			},
