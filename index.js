@@ -468,7 +468,8 @@ if (isBrowser) window.OWOTjs = {
 else {
 	module.exports = {
 		Client: Client,
-		Tiles: Tiles,
-		TileSysystem: TileSystem
+		CharRate,
+		Tiles,
+		TileSystem
 	};
 };
