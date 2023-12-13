@@ -142,8 +142,12 @@ class Client extends EventEmitter {
 				this.emit("tileUpdate", data.tiles);
 
 				for (const update in data.tiles) {
-					Tiles.saveTile(update, data.tiles[update].content);
+					const content = data.tiles[update].content;
+
+					Tiles.saveTile(update, content);
 				};
+
+				if (data.kind == "fetch") this.emit("fetch", data.tiles);
 			};
 			if (data.kind == "user_count") this.world.userCount = data.count;
 			if (data.kind == "channel") {
@@ -183,17 +187,17 @@ class Client extends EventEmitter {
 			getTile: (tileX, tileY) => {
 				return Tiles.chunks[`${tileX},${tileY}`];
 			},
-			getChar: (tileX, tileY, charX, charY) => {
-				return Tiles.chunks[`${tileX},${tileY}`][charX][charY];
+			getChar: async (tileX, tileY, charX, charY) => {
+				const tile = await this.world.requestTileXY(tileX, tileY);
+
+				return tile[charX][charY];
 			},
-			getCharXY: (charX, charY) => {
-				const [tileY, tileX] = this.util.convertXY(charX, charY);
-				const tilePosition = `${tileX},${tileY}`;
+			getCharXY: async (charX, charY) => {
+				var [tileY, tileX, charX, charY] = this.util.convertXY(charX, charY);
 
-				if (!Tiles.chunks[tilePosition])
-					requestTileXY(tilePosition);
+				const tile = await this.world.requestTileXY(tileX, tileY);
 
-				return Tiles.chunks[tilePosition][charX][charY];
+				return tile[charX][charY];
 			},
 			requestRectangle: (minX, minY, maxX, maxY) => {
 				if (this.net.ws.readyState !== 1) return false;
@@ -210,8 +214,23 @@ class Client extends EventEmitter {
 			},
 			requestTileXY: (tileX = 0, tileY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
+				if (Tiles.getTile(tileX, tileY)) return Tiles.getTile(tileX, tileY);
 
-				this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
+				return new Promise((resolve, reject) => {
+					this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
+
+					const fn = (...args) => {
+						const updates = args[0];
+
+						for (const update in updates) {
+							const [tileUpdateY, tileUpdateX] = update.split(",").map(coord => parseInt(coord)); // first coord in key name is Y somewhy
+							if (tileUpdateX !== tileX || tileUpdateY !== tileY) return;
+							this.off("fetch", fn);
+							resolve(Tiles.wrapStringTo16x16(updates[update].content));
+						};
+					};
+					this.on("fetch", fn);
+				});
 			},
 			move: (tileX = 0, tileY = 0, charX = 0, charY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
