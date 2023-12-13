@@ -250,7 +250,7 @@ class Client extends EventEmitter {
 			},
 			writeChar: (char, color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
-				if (Tiles.getChar(tileX, tileY, charX, charY) == char) return false;
+				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
 				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
 
@@ -258,10 +258,10 @@ class Client extends EventEmitter {
 					"kind": "write",
 					"edits": [
 						[
-							tileY,
 							tileX,
-							charY,
+							tileY,
 							charX,
+							charY,
 							this.player.color,
 							char,
 							1 // sequence (not sure if it's necessary)
@@ -278,17 +278,17 @@ class Client extends EventEmitter {
 				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
 
-				const [tileY, tileX] = this.util.convertXY(charX, charY);
-				if (Tiles.getChar(tileX, tileY, charX, charY) == char) return false;
+				var [tileY, tileX, charX, charY] = this.util.convertXY(charX, charY);
+				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
 
 				this.net.ws.send(JSON.stringify({
 					"kind": "write",
 					"edits": [
 						[
-							tileX,
 							tileY,
-							charX,
+							tileX,
 							charY,
+							charX,
 							this.player.color,
 							char,
 							1 // sequence (not sure if it's necessary)
