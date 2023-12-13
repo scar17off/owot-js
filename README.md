@@ -19,6 +19,7 @@ bot.on("join", () => {
 `close` - WebSocket closed  
 `chat` - New message in chat [message Object]  
 `tileUpdate` - New tile updates [updates]  
+`fetch` - New fetched tiles [tile]
 `join` - Joined and got id [id, channel]
 # Options
 `origin` - origin (default: `https://ourworldoftext.com/`)  
@@ -29,7 +30,8 @@ bot.on("join", () => {
 # Module
 ### Requiring the library returns an object with:  
 `Client` - main OTS Client class  
-`Tiles` - Bucket class for quota  
+`CharRate` - CharRate class for quota
+`Tiles` - TileSystem instance
 `TileSystem` - Class for tiles, char management
 # API
 ## Client
@@ -43,6 +45,7 @@ bot.on("join", () => {
 - `tileY`
 - `charX`
 - `charY`
+- `quota`
 
 ### Client.chat
 #### **Client.chat.send(msg)**
@@ -58,7 +61,7 @@ Get char by XY
 #### **Client.world.requestRectangle(minX, minY, maxX, maxY)**
 Request rectangle area and store characters to TileSystem
 #### **Client.world.requestTileXY(tileX, tileY)**
-Request tile by XY and store characters to TileSystem
+Request tile by XY, store data to TileSystem and return data
 #### **Client.world.move(tileX, tileY, charX, charY)**
 Move client to position
 #### **Client.world.moveXY(charX, charY)**
@@ -67,6 +70,10 @@ Move client to char XY
 Write character
 #### **Client.world.writeCharXY(char, color, charX, charY)**
 Write character to XY
+#### **Client.world.writeString(str, color, startTileX, startTileY, startCharX, startCharY)**
+Write string
+#### **Client.world.writeStringXY(str, color, charX, charY)**
+Write string to XY
 #### **Client.world.protectTile(type, tileX, tileY)**
 Protect tile. You need to be an owner to use this
 #### **Client.world.leave()**
