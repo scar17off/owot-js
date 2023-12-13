@@ -8,6 +8,46 @@ if (isBrowser) {
 	Chalk = require("chalk");
 };
 
+class CharRate {
+	constructor(rate, time, infinite) {
+		this.lastCheck = Date.now();
+		this.allowance = rate;
+		this.rate = rate;
+		this.time = time;
+		this.infinite = infinite;
+	};
+	update() {
+		const currentTime = Date.now();
+		this.allowance += (currentTime - this.lastCheck) * (this.rate / this.time);
+		this.lastCheck = currentTime;
+		if (this.allowance > this.rate) {
+			this.allowance = this.rate;
+		};
+	};
+	canSpend(count) {
+		if (this.infinite) {
+			return true;
+		};
+
+		this.update();
+
+		if (this.allowance < count) {
+			return false;
+		};
+
+		this.allowance -= count;
+		return true;
+	};
+	getTimeToRestore() {
+		if (this.allowance >= this.rate) return 0;
+		return (this.rate - this.allowance) / (this.rate / this.time);
+	};
+	async waitUntilRestore() {
+		const restoreTime = this.getTimeToRestore();
+		await new Promise(resolve => setTimeout(resolve, restoreTime));
+	};
+};
+
 class TileSystem {
 	constructor() {
 		this.tiles = {};
@@ -65,7 +105,8 @@ class Client extends EventEmitter {
 				this.player.tileY = tileY;
 				this.player.charX = charX;
 				this.player.charY = charY;
-			}
+			},
+			quota: new CharRate(512, 1000)
 		};
 
 		if (!options.world) options.world = '';
@@ -206,6 +247,7 @@ class Client extends EventEmitter {
 			writeChar: (char, color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (Tiles.getChar(tileX, tileY, charX, charY) == char) return false;
+				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
 
 				this.net.ws.send(JSON.stringify({
@@ -229,6 +271,7 @@ class Client extends EventEmitter {
 			},
 			writeCharXY: (char, color, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
+				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
 
 				const [tileY, tileX] = this.util.convertXY(charX, charY);
@@ -255,32 +298,33 @@ class Client extends EventEmitter {
 			},
 			writeString: (str, color, startTileX, startTileY, startCharX, startCharY) => {
 				if (this.net.ws.readyState !== 1) return false;
-			
+				if (!this.player.quota.canSpend(1)) return false;
+
 				const edits = [];
 				let currentTileX = startTileX;
 				let currentTileY = startTileY;
 				let currentCharX = startCharX;
 				let currentCharY = startCharY;
-			
+
 				if (color) this.player.color = color;
-			
+
 				for (let i = 0; i < str.length; i++) {
 					var char = str[i];
 					const currentChar = Tiles.getChar(currentCharX, currentCharY, Tiles.getTile(currentTileX, currentTileY));
 
-					if(char == '\n') {
+					if (char == '\n') {
 						currentCharX = startCharX;
 						currentTileX = startTileX;
 						currentCharY++;
 
-						if(currentCharY == 16) {
+						if (currentCharY == 16) {
 							currentTileY++;
 							currentCharY = 0;
 						};
 
 						continue;
 					};
-					
+
 					if (char !== currentChar)
 						edits.push([
 							currentTileY,
@@ -294,57 +338,58 @@ class Client extends EventEmitter {
 
 					currentCharX++;
 
-					if(currentCharX == 16) {
+					if (currentCharX == 16) {
 						currentTileX++;
 						currentCharX = 0;
 					};
 				};
-			
+
 				if (edits.length > 0) {
 					this.net.ws.send(JSON.stringify({
 						"kind": "write",
 						"edits": edits
 					}));
 				};
-			
+
 				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
-			
+
 				return true;
 			},
 			writeStringXY: (str, color, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
+				if (!this.player.quota.canSpend(1)) return false;
 
 				const [tileY, tileX] = this.util.convertXY(charX, charY);
 				const startTileX = tileX;
 				const startTileY = tileY;
 				const startCharX = charX;
 				const startCharY = charY;
-			
+
 				const edits = [];
 				let currentTileX = startTileX;
 				let currentTileY = startTileY;
 				let currentCharX = startCharX;
 				let currentCharY = startCharY;
-			
+
 				if (color) this.player.color = color;
-			
+
 				for (let i = 0; i < str.length; i++) {
 					var char = str[i];
 					const currentChar = Tiles.getChar(currentCharX, currentCharY, Tiles.getTile(currentTileX, currentTileY));
 
-					if(char == '\n') {
+					if (char == '\n') {
 						currentCharX = startCharX;
 						currentTileX = startTileX;
 						currentCharY++;
 
-						if(currentCharY == 16) {
+						if (currentCharY == 16) {
 							currentTileY++;
 							currentCharY = 0;
 						};
 
 						continue;
 					};
-					
+
 					if (char !== currentChar)
 						edits.push([
 							currentTileY,
@@ -358,21 +403,21 @@ class Client extends EventEmitter {
 
 					currentCharX++;
 
-					if(currentCharX == 16) {
+					if (currentCharX == 16) {
 						currentTileX++;
 						currentCharX = 0;
 					};
 				};
-			
+
 				if (edits.length > 0) {
 					this.net.ws.send(JSON.stringify({
 						"kind": "write",
 						"edits": edits
 					}));
 				};
-			
+
 				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
-			
+
 				return true;
 			},
 			protectTile: (type = 'public', tileX, tileY) => {
