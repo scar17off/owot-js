@@ -117,12 +117,16 @@ class Client extends EventEmitter {
 
 		this.options = options;
 
+		const parameters = [{
+			headers: {
+				Cookie: typeof options.token == "undefined" ? '' : "csrftoken=" + options.token
+			}
+		}];
+
+		if(isBrowser) parameters.unshift(null);
+
 		this.net = {
-			ws: new WebSocket(this.options.ws, null, {
-				headers: {
-					Cookie: typeof options.token == "undefined" ? '' : "csrftoken=" + options.token
-				}
-			})
+			ws: new WebSocket(this.options.ws, ...parameters)
 		};
 
 		this.net.ws.onopen = () => {
