@@ -35,11 +35,11 @@ class TileSystem {
 			return tile[y][x];
 		return null; // or any default value
 	};
-	getTile(key) {
-		return this.tiles[key] || null;
+	getTile(x, y) {
+		return this.tiles[`${x},${y}`] || null;
 	};
-	saveTile(key, inputString) {
-		const tile = this.wrapStringTo16x16(inputString);
+	saveTile(key, content) {
+		const tile = this.wrapStringTo16x16(content);
 
 		this.tiles[key] = tile;
 	};
@@ -53,7 +53,7 @@ class Client extends EventEmitter {
 
 		this.player = {
 			nickname: '',
-			color: '0',
+			color: 0,
 			id: 0,
 			channel: null,
 			tileX: 0,
@@ -176,10 +176,10 @@ class Client extends EventEmitter {
 				this.net.ws.send(JSON.stringify({
 					"kind": "cursor",
 					"position": {
-						tileX,
 						tileY,
-						charX,
-						charY
+						tileX,
+						charY,
+						charX
 					},
 					"channel": this.player.channel
 				}));
@@ -196,10 +196,10 @@ class Client extends EventEmitter {
 				this.net.ws.send(JSON.stringify({
 					kind: "cursor",
 					position: {
-						tileX: position[0],
-						tileY: position[1],
-						charX: position[2],
-						charY: position[3]
+						tileX: position[1],
+						tileY: position[0],
+						charX: position[3],
+						charY: position[2]
 					},
 					channel: this.player.channel
 				}));
@@ -210,16 +210,17 @@ class Client extends EventEmitter {
 			},
 			writeChar: (char, color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
+				if (Tiles.getChar(tileX, tileY, charX, charY) == char) return false;
 				if (color) this.player.color = color;
 
 				this.net.ws.send(JSON.stringify({
 					"kind": "write",
 					"edits": [
 						[
-							tileX,
 							tileY,
-							charX,
+							tileX,
 							charY,
+							charX,
 							this.player.color,
 							char,
 							1 // sequence (not sure if it's necessary)
@@ -236,15 +237,16 @@ class Client extends EventEmitter {
 				if (color) this.player.color = color;
 
 				const position = this.util.convertXY(charX, charY);
+				if (Tiles.getChar(position[0], position[1], position[2], position[3]) == char) return false;
 
 				this.net.ws.send(JSON.stringify({
 					"kind": "write",
 					"edits": [
 						[
-							position[0],
 							position[1],
-							position[2],
+							position[0],
 							position[3],
+							position[2],
 							this.player.color,
 							char,
 							1 // sequence (not sure if it's necessary)
@@ -254,6 +256,128 @@ class Client extends EventEmitter {
 
 				this.player.setPosition(position[0], position[1], position[2], position[3]);
 
+				return true;
+			},
+			writeString: (str, color, startTileX, startTileY, startCharX, startCharY) => {
+				if (this.net.ws.readyState !== 1) return false;
+			
+				const edits = [];
+				let currentTileX = startTileX;
+				let currentTileY = startTileY;
+				let currentCharX = startCharX;
+				let currentCharY = startCharY;
+			
+				if (color) this.player.color = color;
+			
+				for (let i = 0; i < str.length; i++) {
+					var char = str[i];
+					const currentChar = Tiles.getChar(currentCharX, currentCharY, Tiles.getTile(currentTileX, currentTileY));
+
+					if(char == '\n') {
+						currentCharX = startCharX;
+						currentTileX = startTileX;
+						currentCharY++;
+
+						if(currentCharY == 16) {
+							currentTileY++;
+							currentCharY = 0;
+						};
+
+						continue;
+					};
+					
+					if (char !== currentChar)
+						edits.push([
+							currentTileY,
+							currentTileX,
+							currentCharY,
+							currentCharX,
+							this.player.color,
+							char,
+							i + 1 // sequence
+						]);
+
+					currentCharX++;
+
+					if(currentCharX == 16) {
+						currentTileX++;
+						currentCharX = 0;
+					};
+				};
+			
+				if (edits.length > 0) {
+					this.net.ws.send(JSON.stringify({
+						"kind": "write",
+						"edits": edits
+					}));
+				};
+			
+				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
+			
+				return true;
+			},
+			writeStringXY: (str, color, charX, charY) => {
+				if (this.net.ws.readyState !== 1) return false;
+
+				const position = this.util.convertXY(charX, charY);
+				const startTileX = position[1];
+				const startTileY = position[0];
+				const startCharX = position[3];
+				const startCharY = position[2];
+			
+				const edits = [];
+				let currentTileX = startTileX;
+				let currentTileY = startTileY;
+				let currentCharX = startCharX;
+				let currentCharY = startCharY;
+			
+				if (color) this.player.color = color;
+			
+				for (let i = 0; i < str.length; i++) {
+					var char = str[i];
+					const currentChar = Tiles.getChar(currentCharX, currentCharY, Tiles.getTile(currentTileX, currentTileY));
+
+					if(char == '\n') {
+						currentCharX = startCharX;
+						currentTileX = startTileX;
+						currentCharY++;
+
+						if(currentCharY == 16) {
+							currentTileY++;
+							currentCharY = 0;
+						};
+
+						continue;
+					};
+					
+					if (char !== currentChar)
+						edits.push([
+							currentTileY,
+							currentTileX,
+							currentCharY,
+							currentCharX,
+							this.player.color,
+							char,
+							i + 1 // sequence
+						]);
+
+					currentCharX++;
+
+					if(currentCharX == 16) {
+						currentTileX++;
+						currentCharX = 0;
+					};
+				};
+			
+				if (edits.length > 0) {
+					this.net.ws.send(JSON.stringify({
+						"kind": "write",
+						"edits": edits
+					}));
+				};
+			
+				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
+			
 				return true;
 			},
 			protectTile: (type = 'public', tileX, tileY) => {
