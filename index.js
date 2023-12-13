@@ -123,7 +123,7 @@ class Client extends EventEmitter {
 			}
 		}];
 
-		if(isBrowser) parameters.unshift(null);
+		if (isBrowser) parameters.unshift(null);
 
 		this.net = {
 			ws: new WebSocket(this.options.ws, ...parameters)
@@ -154,8 +154,6 @@ class Client extends EventEmitter {
 			};
 		};
 		this.net.ws.onclose = () => {
-			if (!this.options.log) return;
-
 			this.util.log("WebSocket disconnected!");
 			this.emit("close");
 		};
@@ -264,7 +262,7 @@ class Client extends EventEmitter {
 							charY,
 							this.player.color,
 							char,
-							1 // sequence (not sure if it's necessary)
+							1 // sequence
 						]
 					]
 				}));
@@ -291,7 +289,7 @@ class Client extends EventEmitter {
 							charX,
 							this.player.color,
 							char,
-							1 // sequence (not sure if it's necessary)
+							1 // sequence
 						]
 					]
 				}));
