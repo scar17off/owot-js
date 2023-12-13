@@ -469,6 +469,6 @@ else {
 	module.exports = {
 		Client: Client,
 		Tiles: Tiles,
-		TileSysystem: TileSysystem
+		TileSysystem: TileSystem
 	};
 };
