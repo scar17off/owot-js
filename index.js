@@ -240,7 +240,7 @@ class Client extends EventEmitter {
 					channel: this.player.channel
 				}));
 
-				this.player.setPosition(position[0], position[1], position[2], position[3]);
+				this.player.setPosition(tileX, tileY, charX, charY);
 
 				return true;
 			},
@@ -292,7 +292,7 @@ class Client extends EventEmitter {
 					]
 				}));
 
-				this.player.setPosition(position[0], position[1], position[2], position[3]);
+				this.player.setPosition(tileX, tileY, charX, charY);
 
 				return true;
 			},
