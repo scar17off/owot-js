@@ -142,6 +142,7 @@ class Client extends EventEmitter {
 				this.emit("tileUpdate", data.tiles);
 
 				for (const update in data.tiles) {
+					if(!data.tiles[update]) return;
 					const content = data.tiles[update].content;
 
 					Tiles.saveTile(update, content);
