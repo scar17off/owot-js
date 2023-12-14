@@ -452,6 +452,42 @@ class Client extends EventEmitter {
 				}));
 
 				return true;
+			},
+			createLinkURL: (url, tileX, tileY, charX, charY) => {
+				if (this.net.ws.readyState !== 1) return false;
+
+				this.net.ws.send(JSON.stringify({
+					kind: "link",
+					data: {
+						tileY,
+						tileX,
+						charY,
+						charX,
+						url: url
+					},
+					type: "url"
+				}));
+
+				return true
+			},
+			createLinkCoordinates: (url, linkTileX, linkTileY, tileX, tileY, charX, charY) => {
+				if (this.net.ws.readyState !== 1) return false;
+
+				this.net.ws.send(JSON.stringify({
+					kind: "link",
+					data: {
+						tileY,
+						tileX,
+						charY,
+						charX,
+						link_tileX: linkTileX,
+						link_tileY: linkTileY,
+						url: url
+					},
+					type: "coord"
+				}));
+
+				return true
 			}
 		};
 		this.util = {
@@ -466,6 +502,7 @@ class Client extends EventEmitter {
 
 				return [tileX, tileY, charX, charY];
 			},
+			convertPosition: (tileX, tileY, charX, charY) => [tileX * 16 + charX, tileY * 8 + charY],
 			getCursorPosition: () => {
 				let pos = [cursorCoords[0] * 16 + cursorCoords[2], cursorCoords[1] * 8 + cursorCoords[3]];
 				if (!pos[1].toString().startsWith("-")) pos[1] = Math.abs(pos[1]);
