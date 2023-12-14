@@ -377,11 +377,11 @@ class Client extends EventEmitter {
 
 				return true;
 			},
-			writeStringXY: (str, color, charX, charY) => {
+			writeStringXY: (str, color, x, y) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (!this.player.quota.canSpend(1)) return false;
 
-				const [tileX, tileY] = this.util.convertXY(charX, charY);
+				[tileX, tileY, charX, charY] = this.util.convertXY(x, y);
 				const startTileX = tileX;
 				const startTileY = tileY;
 				const startCharX = charX;
