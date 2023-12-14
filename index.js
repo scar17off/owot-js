@@ -194,7 +194,7 @@ class Client extends EventEmitter {
 				return tile[charX][charY];
 			},
 			getCharXY: async (charX, charY) => {
-				var [tileY, tileX, charX, charY] = this.util.convertXY(charX, charY);
+				var [tileX, tileY, charX, charY] = this.util.convertXY(charX, charY);
 
 				const tile = await this.world.requestTileXY(tileX, tileY);
 
@@ -254,7 +254,7 @@ class Client extends EventEmitter {
 			moveXY: (charX = 0, charY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
 
-				const [tileY, tileX] = this.util.convertXY(charX, charY);
+				const [tileX, tileY] = this.util.convertXY(charX, charY);
 
 				this.net.ws.send(JSON.stringify({
 					kind: "cursor",
@@ -296,7 +296,7 @@ class Client extends EventEmitter {
 				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
 
-				var [tileY, tileX, charX, charY] = this.util.convertXY(charX, charY);
+				var [tileX, tileY, charX, charY] = this.util.convertXY(charX, charY);
 				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
 
 				this.net.ws.send(JSON.stringify({
@@ -381,7 +381,7 @@ class Client extends EventEmitter {
 				if (this.net.ws.readyState !== 1) return false;
 				if (!this.player.quota.canSpend(1)) return false;
 
-				const [tileY, tileX] = this.util.convertXY(charX, charY);
+				const [tileX, tileY] = this.util.convertXY(charX, charY);
 				const startTileX = tileX;
 				const startTileY = tileY;
 				const startCharX = charX;
