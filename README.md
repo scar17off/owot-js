@@ -8,7 +8,7 @@ REQUIRES NODE.JS 12.0+!
 ```js
 const OWOTjs = require('owot-js');
 
-var bot = new OWOTjs.Client(<object> options);
+var bot = new OWOTjs.Client();
 
 bot.on("join", () => {
     bot.chat.send('Hello World!');
