@@ -8,7 +8,7 @@ REQUIRES NODE.JS 12.0+!
 ```js
 const OWOTjs = require('owot-js');
 
-var bot = new OWOTjs.Client(<object> options);
+var bot = new OWOTjs.Client();
 
 bot.on("join", () => {
     bot.chat.send('Hello World!');
@@ -29,7 +29,7 @@ bot.on("join", () => {
 `token` - uvias token
 # Module
 ### Requiring the library returns an object with:  
-`Client` - main OTS Client class  
+`Client` - main client class  
 `CharRate` - CharRate class for quota  
 `Tiles` - TileSystem instance  
 `TileSystem` - Class for tiles, char management
