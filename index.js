@@ -8,7 +8,20 @@ if (isBrowser) {
 	Chalk = require("chalk");
 };
 
+/**
+ * Class representing a rate limiter.
+ */
 class CharRate {
+	/**
+ 		* Constructs a new object representing a rate limiter with specified parameters.
+ 		*
+ 		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
+ 		* @param {number} time - The time unit in milliseconds over which the rate is applied.
+ 		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
+ 		*                            If true, the allowance is not limited and remains constant.
+ 		*                            If false, the allowance is updated based on the rate and time.
+ 		* @constructor
+ 	 */
 	constructor(rate, time, infinite) {
 		this.lastCheck = Date.now();
 		this.allowance = rate;
@@ -16,6 +29,10 @@ class CharRate {
 		this.time = time;
 		this.infinite = infinite;
 	};
+	/**
+ 		* Updates the allowance based on the elapsed time since the last check.
+ 		* Adjusts the allowance according to the rate and time constraints.
+ 	 */
 	update() {
 		const currentTime = Date.now();
 		this.allowance += (currentTime - this.lastCheck) * (this.rate / this.time);
@@ -24,6 +41,14 @@ class CharRate {
 			this.allowance = this.rate;
 		};
 	};
+	/**
+		* Checks if the specified count can be spent based on the allowance.
+		* If the allowance is infinite, it always returns true.
+		* Otherwise, it updates the allowance and checks if it's sufficient.
+		*
+		* @param {number} count - The count to be spent.
+		* @returns {boolean} - Returns true if the count can be spent, false otherwise.
+	 */
 	canSpend(count) {
 		if (this.infinite) {
 			return true;
@@ -38,20 +63,48 @@ class CharRate {
 		this.allowance -= count;
 		return true;
 	};
+	/**
+ 		* Calculates the time remaining until the allowance is fully restored to the specified rate.
+ 		* If the allowance is already equal to or greater than the rate, returns 0.
+ 		*
+ 		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
+ 	 */
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
 	};
+	/**
+ 		* Waits asynchronously until the allowance is fully restored to the specified rate.
+ 		* It uses the getTimeToRestore method to determine the wait time.
+ 		*
+ 		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
+ 	 */
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
 		await new Promise(resolve => setTimeout(resolve, restoreTime));
 	};
 };
 
+/**
+ * Class representing a Tile System.
+ */
 class TileSystem {
+	/**
+     * Constructs a new TileSystem object with an empty tiles object.
+     * @constructor
+     */
 	constructor() {
+		/**
+         * Object containing tiles, identified by their coordinates (e.g., "x,y").
+         * @type {Object.<string, Array.<Array.<string>>>}
+         */
 		this.tiles = {};
 	};
+	/**
+     * Wraps a given input string into a 16x16 grid represented as a 2D array.
+     * @param {string} inputString - The input string to wrap into a 16x16 grid.
+     * @returns {Array.<Array.<string>>} - A 2D array representing the wrapped 16x16 grid.
+     */
 	wrapStringTo16x16(inputString) {
 		const result = [];
 		let index = 0;
@@ -70,14 +123,33 @@ class TileSystem {
 
 		return result;
 	};
+	/**
+     * Gets the character at the specified coordinates (x, y) within a given tile.
+     * @param {number} x - The x-coordinate of the character within the tile.
+     * @param {number} y - The y-coordinate of the character within the tile.
+     * @param {Array.<Array.<string>>} tile - The tile represented as a 2D array.
+     * @returns {string|null} - The character at the specified coordinates, or null if not found.
+     */
 	getChar(x, y, tile) {
 		if (tile && tile[y] && tile[y][x])
 			return tile[y][x];
 		return null; // or any default value
 	};
+	/**
+     * Retrieves the tile at the specified coordinates (x, y) from the tiles object.
+     * @param {number} x - The x-coordinate of the tile.
+     * @param {number} y - The y-coordinate of the tile.
+     * @returns {Array.<Array.<string>>|null} - The tile represented as a 2D array, or null if not found.
+     */
 	getTile(x, y) {
 		return this.tiles[`${x},${y}`] || null;
 	};
+	/**
+     * Saves a tile with the given key and content into the tiles object.
+     * @param {string} key - The key identifying the tile (e.g., "x,y").
+     * @param {string} content - The content to be wrapped into a 16x16 grid and saved as a tile.
+     * @returns {void}
+     */
 	saveTile(key, content) {
 		const tile = this.wrapStringTo16x16(content);
 
@@ -87,9 +159,39 @@ class TileSystem {
 
 const Tiles = new TileSystem();
 
+/**
+ * Class representing a Client that extends EventEmitter.
+ * @extends EventEmitter
+ */
 class Client extends EventEmitter {
+	/**
+     * Constructs a new Client object with optional configuration options.
+     * @param {Object} [options={}] - Configuration options for the client.
+     * @param {string} [options.world=''] - The world identifier.
+     * @param {string} [options.color='0'] - The default color for the player.
+     * @param {boolean} [options.log=true] - Indicates whether logging is enabled.
+     * @param {string} [options.origin='https://ourworldoftext.com/'] - The origin URL.
+     * @param {string} [options.ws] - The WebSocket URL for communication.
+     * @param {string} [options.token] - The authentication token.
+     * @constructor
+     */
 	constructor(options = {}) {
 		super();
+
+		/**
+         * Player information including nickname, color, id, channel, and position.
+         * @type {Object}
+         * @property {string} nickname - The player's nickname.
+         * @property {string} color - The player's color.
+         * @property {number} id - The player's id.
+         * @property {string|null} channel - The player's channel.
+         * @property {number} tileX - The player's tile x-coordinate.
+         * @property {number} tileY - The player's tile y-coordinate.
+         * @property {number} charX - The player's character x-coordinate.
+         * @property {number} charY - The player's character y-coordinate.
+         * @property {Function} setPosition - Sets the player's position.
+         * @property {Object} quota - Object representing character rate quota using CharRate class.
+         */
 
 		this.player = {
 			nickname: '',
@@ -164,6 +266,13 @@ class Client extends EventEmitter {
 		};
 
 		this.chat = {
+			/**
+			 * Sends a chat message through the WebSocket connection.
+			 * @param {string} message - The message to be sent.
+			 * @param {string} [color] - The color of the message.
+			 * @param {boolean} [global=false] - Indicates whether the message is global.
+			 * @returns {boolean} - Returns true if the message was sent successfully, false otherwise.
+			 */
 			send: (message, color, global = false) => {
 				if (this.net.ws.readyState !== 1) return;
 
@@ -185,14 +294,35 @@ class Client extends EventEmitter {
 				this.net.ws.close();
 				this.emit("close");
 			},
+			/**
+			 * Retrieves the tile at the specified coordinates (tileX, tileY).
+			 * @param {number} tileX - The x-coordinate of the tile.
+			 * @param {number} tileY - The y-coordinate of the tile.
+			 * @returns {Array.<Array.<string>>|null} - The tile represented as a 2D array, or null if not found.
+			 */
 			getTile: (tileX, tileY) => {
 				return Tiles.chunks[`${tileX},${tileY}`];
 			},
+			/**
+			* Retrieves the character at the specified coordinates (tileX, tileY, charX, charY) from the world.
+			* @param {number} tileX - The x-coordinate of the tile.
+			* @param {number} tileY - The y-coordinate of the tile.
+			* @param {number} charX - The x-coordinate of the character within the tile.
+			* @param {number} charY - The y-coordinate of the character within the tile.
+			* @returns {Promise<string>} - A promise that resolves to the character at the specified coordinates.
+			*/
 			getChar: async (tileX, tileY, charX, charY) => {
 				const tile = await this.world.requestTileXY(tileX, tileY);
 
 				return tile[charX][charY];
 			},
+			/**
+			 * Retrieves the character at the specified coordinates within the world asynchronously.
+			 *
+			 * @param {number} charX - The x-coordinate of the character.
+			 * @param {number} charY - The y-coordinate of the character.
+			 * @returns {Promise<string>} - A Promise that resolves to the character at the specified coordinates.
+			 */
 			getCharXY: async (charX, charY) => {
 				var [tileX, tileY, charX, charY] = this.util.convertXY(charX, charY);
 
@@ -200,6 +330,15 @@ class Client extends EventEmitter {
 
 				return tile[charX][charY];
 			},
+			/**
+			 * Request content within a specified rectangular region.
+			 *
+			 * @param {number} minX - The minimum x-coordinate of the rectangular region.
+			 * @param {number} minY - The minimum y-coordinate of the rectangular region.
+			 * @param {number} maxX - The maximum x-coordinate of the rectangular region.
+			 * @param {number} maxY - The maximum y-coordinate of the rectangular region.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
+			 */
 			requestRectangle: (minX, minY, maxX, maxY) => {
 				if (this.net.ws.readyState !== 1) return false;
 
@@ -213,6 +352,17 @@ class Client extends EventEmitter {
 					kind: "fetch"
 				}));
 			},
+			/**
+			 * Request the content of a tile at specified coordinates.
+			 * If the content is already available locally, it returns the tile content immediately.
+			 * Otherwise, it sends a fetch request to the server and returns a Promise that resolves with the fetched tile content.
+			 *
+			 * @param {number} [tileX=0] - The x-coordinate of the requested tile (default is 0).
+			 * @param {number} [tileY=0] - The y-coordinate of the requested tile (default is 0).
+			 * @returns {Promise<Array.<Array.<string>>>|Array.<Array.<string>>|boolean} - If the content is available locally, returns the tile content.
+			 *                                                                            If the WebSocket connection is not open, returns false.
+			 *                                                                            Otherwise, returns a Promise that resolves with the fetched tile content.
+			 */
 			requestTileXY: (tileX = 0, tileY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (Tiles.getTile(tileX, tileY)) return Tiles.getTile(tileX, tileY);
@@ -233,6 +383,15 @@ class Client extends EventEmitter {
 					this.on("fetch", fn);
 				});
 			},
+			/**
+			 * Update the cursor position and move the player accordingly.
+			 *
+			 * @param {number} [tileX=0] - The target x-coordinate of the tile for the cursor and player.
+			 * @param {number} [tileY=0] - The target y-coordinate of the tile for the cursor and player.
+			 * @param {number} [charX=0] - The target x-coordinate of the character within the tile.
+			 * @param {number} [charY=0] - The target y-coordinate of the character within the tile.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
+			 */
 			move: (tileX = 0, tileY = 0, charX = 0, charY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
 
@@ -251,6 +410,13 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Update the cursor position based on character coordinates.
+			 *
+			 * @param {number} [charX=0] - The x-coordinate of the character within its tile (default is 0).
+			 * @param {number} [charY=0] - The y-coordinate of the character within its tile (default is 0).
+			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
+			 */
 			moveXY: (charX = 0, charY = 0) => {
 				if (this.net.ws.readyState !== 1) return false;
 
@@ -266,6 +432,18 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Write a character at specified coordinates, with optional color.
+			 *
+			 * @param {string} char - The character to be written.
+			 * @param {string} color - The color to be applied to the character (optional).
+			 * @param {number} tileX - The x-coordinate of the tile where the character will be written.
+			 * @param {number} tileY - The y-coordinate of the tile where the character will be written.
+			 * @param {number} charX - The x-coordinate of the character within its tile.
+			 * @param {number} charY - The y-coordinate of the character within its tile.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open, the character is different from the existing one,
+			 *                     the player has enough quota to spend, and the message is sent successfully; otherwise, returns false.
+			 */
 			writeChar: (char, color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
@@ -291,6 +469,16 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Write a character at specified coordinates.
+			 * Updates player position and color if provided.
+			 *
+			 * @param {string} char - The character to be written.
+			 * @param {string} [color] - The color of the character. If provided, updates the player's color.
+			 * @param {number} charX - The x-coordinate of the character within its tile.
+			 * @param {number} charY - The y-coordinate of the character within its tile.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open, the player has enough quota, and the message is sent successfully; otherwise, returns false.
+			 */
 			writeCharXY: (char, color, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (!this.player.quota.canSpend(1)) return false;
@@ -318,6 +506,18 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Write a string with color to the grid starting from specified coordinates.
+			 * Updates player position and deducts quota based on the length of the string.
+			 *
+			 * @param {string} str - The string to be written to the grid.
+			 * @param {string|null} color - The color to be applied to the characters in the string. If null, the player's color remains unchanged.
+			 * @param {number} startTileX - The x-coordinate of the starting tile for writing.
+			 * @param {number} startTileY - The y-coordinate of the starting tile for writing.
+			 * @param {number} startCharX - The x-coordinate of the starting character within the starting tile.
+			 * @param {number} startCharY - The y-coordinate of the starting character within the starting tile.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open, the player has sufficient quota, and the message is sent successfully; otherwise, returns false.
+			 */
 			writeString: (str, color, startTileX, startTileY, startCharX, startCharY) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (!this.player.quota.canSpend(1)) return false;
@@ -377,6 +577,17 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Write a string at the specified coordinates with optional color.
+			 * The method calculates the tile and character positions based on provided (x, y) coordinates.
+			 * If the WebSocket connection is not open or the player's quota is insufficient, the method returns false.
+			 *
+			 * @param {string} str - The string to be written.
+			 * @param {string|null} color - The color to apply to the text, or null for default color.
+			 * @param {number} x - The x-coordinate where the string should start.
+			 * @param {number} y - The y-coordinate where the string should start.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open, the player's quota allows spending, and the message is sent successfully; otherwise, returns false.
+			 */
 			writeStringXY: (str, color, x, y) => {
 				if (this.net.ws.readyState !== 1) return false;
 				if (!this.player.quota.canSpend(1)) return false;
@@ -442,6 +653,15 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Protect a tile with a specified protection type.
+			 *
+			 * @param {string} [type='public'] - The type of protection to be applied to the tile (e.g., 'public', 'private').
+			 *                                    Defaults to 'public' if not provided.
+			 * @param {number} tileX - The x-coordinate of the tile to be protected.
+			 * @param {number} tileY - The y-coordinate of the tile to be protected.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
+			 */
 			protectTile: (type = 'public', tileX, tileY) => {
 				if (this.net.ws.readyState !== 1) return false;
 
@@ -453,6 +673,16 @@ class Client extends EventEmitter {
 
 				return true;
 			},
+			/**
+			 * Create a link with a URL.
+			 *
+			 * @param {string} url - The URL to be associated with the link.
+			 * @param {number} tileX - The x-coordinate of the current character's tile.
+			 * @param {number} tileY - The y-coordinate of the current character's tile.
+			 * @param {number} charX - The x-coordinate of the current character within its tile.
+			 * @param {number} charY - The y-coordinate of the current character within its tile.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
+			 */
 			createLinkURL: (url, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
 
@@ -470,6 +700,18 @@ class Client extends EventEmitter {
 
 				return true
 			},
+			/**
+			 * Create a link with coordinates.
+			 *
+			 * @param {string} url - The URL to be associated with the link.
+			 * @param {number} linkTileX - The x-coordinate of the tile containing the linked character.
+			 * @param {number} linkTileY - The y-coordinate of the tile containing the linked character.
+			 * @param {number} tileX - The x-coordinate of the current character's tile.
+			 * @param {number} tileY - The y-coordinate of the current character's tile.
+			 * @param {number} charX - The x-coordinate of the current character within its tile.
+			 * @param {number} charY - The y-coordinate of the current character within its tile.
+			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
+			 */
 			createLinkCoordinates: (url, linkTileX, linkTileY, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
 
@@ -490,10 +732,34 @@ class Client extends EventEmitter {
 				return true
 			}
 		};
+		/**
+		 * Utility methods
+		 * @type {Object}
+		 * @property {function} rgbToInt - Converts RGB values to a single integer.
+		 * @property {function} convertXY - Converts screen coordinates to tile and character coordinates.
+		 * @property {function} convertPosition - Converts tile and character coordinates to a flat position.
+		 * @property {function} getCursorPosition - Retrieves the cursor position based on internal cursor coordinates.
+		 * @property {function} log - Logs a message if logging is enabled.
+		 */
 		this.util = {
+			/**
+			 * Converts RGB values to a single integer.
+			 *
+			 * @param {number} r - The red component (0-255).
+			 * @param {number} g - The green component (0-255).
+			 * @param {number} b - The blue component (0-255).
+			 * @returns {number} - The integer representation of the RGB values.
+			 */
 			rgbToInt: (r, g, b) => {
 				return b | g << 8 | r << 16;
 			},
+			 /**
+			 * Converts screen coordinates to tile and character coordinates.
+			 *
+			 * @param {number} x - The x-coordinate on the screen.
+			 * @param {number} y - The y-coordinate on the screen.
+			 * @returns {Array.<number>} - An array containing [tileX, tileY, charX, charY].
+			 */
 			convertXY: (x, y) => {
 				let tileX = Math.floor(x / 16);
 				let tileY = Math.floor(y / 8);
@@ -502,12 +768,32 @@ class Client extends EventEmitter {
 
 				return [tileX, tileY, charX, charY];
 			},
+			/**
+			 * Converts tile and character coordinates to a flat position.
+			 *
+			 * @param {number} tileX - The x-coordinate of the tile.
+			 * @param {number} tileY - The y-coordinate of the tile.
+			 * @param {number} charX - The x-coordinate of the character within the tile.
+			 * @param {number} charY - The y-coordinate of the character within the tile.
+			 * @returns {Array.<number>} - An array containing the flat position [position].
+			 */
 			convertPosition: (tileX, tileY, charX, charY) => [tileX * 16 + charX, tileY * 8 + charY],
+			/**
+			 * Retrieves the cursor position based on internal cursor coordinates.
+			 *
+			 * @returns {Array.<number>} - An array containing the cursor position [cursorX, cursorY].
+			 */
 			getCursorPosition: () => {
 				let pos = [cursorCoords[0] * 16 + cursorCoords[2], cursorCoords[1] * 8 + cursorCoords[3]];
 				if (!pos[1].toString().startsWith("-")) pos[1] = Math.abs(pos[1]);
 				return pos;
 			},
+			/**
+			 * Logs a message if logging is enabled.
+			 *
+			 * @param {string} msg - The message to be logged.
+			 * @returns {void}
+			 */
 			log: (msg) => {
 				if (!this.options.log) return;
 
@@ -525,10 +811,30 @@ if (isBrowser) window.OWOTjs = {
 	TileSystem
 };
 else {
-	module.exports = {
-		Client: Client,
-		CharRate,
-		Tiles,
-		TileSystem
-	};
+	/**
+     * Module exports for the non-browser (Node.js/CommonJS) environment.
+     * @module OWOTjs
+     */
+    module.exports = {
+        /**
+         * The Client class for managing WebSocket connections.
+         * @type {Class}
+         */
+        Client: Client,
+        /**
+         * The CharRate class for managing character rate limitations.
+         * @type {Class}
+         */
+        CharRate: CharRate,
+        /**
+         * The Tiles class for handling tiles and characters.
+         * @type {Class}
+         */
+        Tiles: Tiles,
+        /**
+         * The TileSystem class for managing tiles and their properties.
+         * @type {Class}
+         */
+        TileSystem: TileSystem
+    };
 };
