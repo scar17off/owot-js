@@ -55,7 +55,7 @@ Send message in chat
 #### **Client.world.getTile(tileX, tileY)**
 Get tile data.
 #### **Client.world.getChar(tileX, tileY, charX, charY)**
-Get tile data.
+Get char.
 #### **Client.world.getCharXY(charX, charY)**
 Get char by XY
 #### **Client.world.requestRectangle(minX, minY, maxX, maxY)**
