@@ -48,8 +48,8 @@ bot.on("join", () => {
 - `quota`
 
 ### Client.chat
-#### **Client.chat.send(msg)**
-Send message in chat
+#### **Client.chat.send(msg, color, global)**
+Send message in chat. Local by default.
 
 ### Client.world
 #### **Client.world.getTile(tileX, tileY)**
