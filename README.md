@@ -74,6 +74,8 @@ Write character to XY
 Write string
 #### **Client.world.writeStringXY(str, color, charX, charY)**
 Write string to XY
+#### **Client.world.writeStringXY2(str, color, charX, charY, sleep = 3)**
+Write string to XY ensuring rate-limiting.
 #### **Client.world.protectTile(type, tileX, tileY)**
 Protect tile. You need to be an owner to use this
 #### **Client.world.leave()**
