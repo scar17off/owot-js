@@ -28,7 +28,7 @@ class CharRate {
 		this.rate = rate;
 		this.time = time;
 		this.infinite = infinite;
-	};
+	}
 	/**
  		* Updates the allowance based on the elapsed time since the last check.
  		* Adjusts the allowance according to the rate and time constraints.
@@ -39,8 +39,8 @@ class CharRate {
 		this.lastCheck = currentTime;
 		if (this.allowance > this.rate) {
 			this.allowance = this.rate;
-		};
-	};
+		}
+	}
 	/**
 		* Checks if the specified count can be spent based on the allowance.
 		* If the allowance is infinite, it always returns true.
@@ -52,17 +52,17 @@ class CharRate {
 	canSpend(count) {
 		if (this.infinite) {
 			return true;
-		};
+		}
 
 		this.update();
 
 		if (this.allowance < count) {
 			return false;
-		};
+		}
 
 		this.allowance -= count;
 		return true;
-	};
+	}
 	/**
  		* Calculates the time remaining until the allowance is fully restored to the specified rate.
  		* If the allowance is already equal to or greater than the rate, returns 0.
@@ -72,7 +72,7 @@ class CharRate {
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
-	};
+	}
 	/**
  		* Waits asynchronously until the allowance is fully restored to the specified rate.
  		* It uses the getTimeToRestore method to determine the wait time.
@@ -82,8 +82,8 @@ class CharRate {
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
 		await new Promise(resolve => setTimeout(resolve, restoreTime));
-	};
-};
+	}
+}
 
 /**
  * Class representing a Tile System.
@@ -98,8 +98,8 @@ class TileSystem {
          * Object containing tiles, identified by their coordinates (e.g., "x,y").
          * @type {Object.<string, Array.<Array.<string>>>}
          */
-		this.tiles = {};
-	};
+		this.tiles = {}
+	}
 	/**
      * Wraps a given input string into a 16x16 grid represented as a 2D array.
      * @param {string} inputString - The input string to wrap into a 16x16 grid.
@@ -118,11 +118,11 @@ class TileSystem {
 					result[i][j] = ' ';
 
 				index++;
-			};
-		};
+			}
+		}
 
 		return result;
-	};
+	}
 	/**
      * Gets the character at the specified coordinates (x, y) within a given tile.
      * @param {number} x - The x-coordinate of the character within the tile.
@@ -134,7 +134,7 @@ class TileSystem {
 		if (tile && tile[y] && tile[y][x])
 			return tile[y][x];
 		return null; // or any default value
-	};
+	}
 	/**
      * Retrieves the tile at the specified coordinates (x, y) from the tiles object.
      * @param {number} x - The x-coordinate of the tile.
@@ -143,7 +143,7 @@ class TileSystem {
      */
 	getTile(x, y) {
 		return this.tiles[`${x},${y}`] || null;
-	};
+	}
 	/**
      * Saves a tile with the given key and content into the tiles object.
      * @param {string} key - The key identifying the tile (e.g., "x,y").
@@ -154,8 +154,8 @@ class TileSystem {
 		const tile = this.wrapStringTo16x16(content);
 
 		this.tiles[key] = tile;
-	};
-};
+	}
+}
 
 const Tiles = new TileSystem();
 
@@ -209,7 +209,7 @@ class Client extends EventEmitter {
 				this.player.charY = charY;
 			},
 			quota: new CharRate(512, 1000)
-		};
+		}
 
 		if (!options.world) options.world = '';
 		if (!options.color) options.color = '0';
@@ -229,13 +229,13 @@ class Client extends EventEmitter {
 
 		this.net = {
 			ws: new WebSocket(this.options.ws, ...parameters)
-		};
+		}
 
 		this.net.ws.onopen = () => {
 			this.util.log(`WebSocket connected!`);
 			this.util.log(`Joined world '${options.world}'`);
 			this.emit("open");
-		};
+		}
 		this.net.ws.onmessage = (msg) => {
 			let data = JSON.parse(msg.data);
 
@@ -248,22 +248,22 @@ class Client extends EventEmitter {
 					const content = data.tiles[update].content;
 
 					Tiles.saveTile(update, content);
-				};
+				}
 
 				if (data.kind == "fetch") this.emit("fetch", data.tiles);
-			};
+			}
 			if (data.kind == "user_count") this.world.userCount = data.count;
 			if (data.kind == "channel") {
 				this.player.id = data.id;
 				this.player.channel = data.channel;
 
 				this.emit("join", data.id, data.channel);
-			};
-		};
+			}
+		}
 		this.net.ws.onclose = () => {
 			this.util.log("WebSocket disconnected!");
 			this.emit("close");
-		};
+		}
 
 		this.chat = {
 			/**
@@ -286,7 +286,7 @@ class Client extends EventEmitter {
 
 				return true;
 			}
-		};
+		}
 		this.world = {
 			userCount: 0,
 			leave: () => {
@@ -378,8 +378,8 @@ class Client extends EventEmitter {
 							if (tileUpdateX !== tileX || tileUpdateY !== tileY) return;
 							this.off("fetch", fn);
 							resolve(Tiles.wrapStringTo16x16(updates[update].content));
-						};
-					};
+						}
+					}
 					this.on("fetch", fn);
 				});
 			},
@@ -542,10 +542,10 @@ class Client extends EventEmitter {
 						if (currentCharY == 16) {
 							currentTileY++;
 							currentCharY = 0;
-						};
+						}
 
 						continue;
-					};
+					}
 
 					if (char !== currentChar)
 						edits.push([
@@ -563,15 +563,15 @@ class Client extends EventEmitter {
 					if (currentCharX == 16) {
 						currentTileX++;
 						currentCharX = 0;
-					};
-				};
+					}
+				}
 
 				if (edits.length > 0) {
 					this.net.ws.send(JSON.stringify({
 						"kind": "write",
 						"edits": edits
 					}));
-				};
+				}
 
 				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
 
@@ -618,10 +618,10 @@ class Client extends EventEmitter {
 						if (currentCharY == 16) {
 							currentTileY++;
 							currentCharY = 0;
-						};
+						}
 
 						continue;
-					};
+					}
 
 					if (char !== currentChar)
 						edits.push([
@@ -639,19 +639,41 @@ class Client extends EventEmitter {
 					if (currentCharX == 16) {
 						currentTileX++;
 						currentCharX = 0;
-					};
-				};
+					}
+				}
 
 				if (edits.length > 0) {
 					this.net.ws.send(JSON.stringify({
 						"kind": "write",
 						"edits": edits
 					}));
-				};
+				}
 
 				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
 
 				return true;
+			},
+			/**
+			 * Writes a string with quota, ensuring rate limiting.
+			 *
+			 * @param {string} str - The string to be written.
+			 * @param {number} x - The x-coordinate to start writing the string.
+			 * @param {number} y - The y-coordinate to start writing the string.
+			 * @returns {Promise<void>} - Resolves once the string is fully written with quota.
+			 */
+			writeStringXY2: async (str, x, y, sleep = 3) => {
+				for (let i = 0; i < str.length; i++) {
+					this.player.quota.update();
+			
+					if (this.player.quota.allowance > 1) {
+						this.world.writeCharXY(str[i], this.player.color, x + i, y);
+						if (sleep !== false) {
+							await new Promise(resolve => setTimeout(resolve, sleep));
+						}
+					} else {
+						await new Promise(resolve => setTimeout(resolve, this.player.quota.getTimeToRestore()));
+					}
+				}
 			},
 			/**
 			 * Protect a tile with a specified protection type.
@@ -731,7 +753,7 @@ class Client extends EventEmitter {
 
 				return true
 			}
-		};
+		}
 		/**
 		 * Utility methods
 		 * @type {Object}
@@ -801,15 +823,15 @@ class Client extends EventEmitter {
 				if (isBrowser) console.log('%c ' + msg, "color: #00ff00");
 				else Chalk.green(msg);
 			}
-		};
-	};
-};
+		}
+	}
+}
 
 if (isBrowser) window.OWOTjs = {
 	Client: Client,
 	Tiles,
 	TileSystem
-};
+}
 else {
 	/**
      * Module exports for the non-browser (Node.js/CommonJS) environment.
@@ -836,5 +858,5 @@ else {
          * @type {Class}
          */
         TileSystem: TileSystem
-    };
-};
+    }
+}
