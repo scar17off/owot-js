@@ -507,7 +507,27 @@ class Client extends EventEmitter {
 				return true;
 			},
 			/**
-			 * Write a string with color to the grid starting from specified coordinates.
+			 * Asynchronously writes a character at specified coordinates
+			 * Updates quota and waits if allowance is 0 before attempting to write.
+			 *
+			 * @async
+			 * @param {string} char - The character to be written.
+			 * @param {number} x - The x-coordinate of the character.
+			 * @param {number} y - The y-coordinate of the character.
+			 */
+			writeCharXY2: async (char, x, y) => {
+				this.player.quota.update();
+				if(this.player.quota.allowance === 0) {
+					await new Promise(resolve => setTimeout(resolve, this.player.quota.getTimeToRestore()));
+					this.player.quota.update();
+				}
+				const currentChar = await this.world.getCharXY(x, y);
+				if(char !== currentChar) {
+					this.world.writeCharXY(char, this.player.color, x, y);
+				}
+			},
+			/**
+			 * Write a string from specified coordinates.
 			 * Updates player position and deducts quota based on the length of the string.
 			 *
 			 * @param {string} str - The string to be written to the grid.
@@ -654,24 +674,26 @@ class Client extends EventEmitter {
 				return true;
 			},
 			/**
-			 * Writes a string with quota, ensuring rate limiting.
+			 * Write a string at specified coordinates.
 			 *
 			 * @param {string} str - The string to be written.
-			 * @param {number} x - The x-coordinate to start writing the string.
-			 * @param {number} y - The y-coordinate to start writing the string.
-			 * @returns {Promise<void>} - Resolves once the string is fully written with quota.
+			 * @param {number} x - The x-coordinate where the string starts.
+			 * @param {number} y - The y-coordinate where the string starts.
 			 */
-			writeStringXY2: async (str, x, y, sleep = 3) => {
-				for (let i = 0; i < str.length; i++) {
+			writeStringXY2: async (str, x, y) => {
+				let i = 0;
+				while(i < str.length) {
 					this.player.quota.update();
-			
-					if (this.player.quota.allowance > 1) {
-						this.world.writeCharXY(str[i], this.player.color, x + i, y);
-						if (sleep !== false) {
-							await new Promise(resolve => setTimeout(resolve, sleep));
-						}
-					} else {
+					const charsToWrite = Math.floor(this.player.quota.allowance);
+					const end = Math.min(i + charsToWrite, str.length);
+					if(this.player.quota.allowance === 0) {
 						await new Promise(resolve => setTimeout(resolve, this.player.quota.getTimeToRestore()));
+					}
+					for(; i < end; i++) {
+						const currentChar = await this.world.getCharXY(x + i, y);
+						if(char !== currentChar) {
+							this.world.writeCharXY(str[i], this.player.color, x + i, y);
+						}
 					}
 				}
 			},
