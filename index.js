@@ -8,13 +8,8 @@ if (isBrowser) {
 	Chalk = require("chalk");
 };
 
-/**
- * Class representing a rate limiter.
- */
 class CharRate {
 	/**
- 		* Constructs a new object representing a rate limiter with specified parameters.
- 		*
  		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
  		* @param {number} time - The time unit in milliseconds over which the rate is applied.
  		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
@@ -85,14 +80,10 @@ class CharRate {
 	}
 }
 
-/**
- * Class representing a Tile System.
- */
 class TileSystem {
 	/**
-     * Constructs a new TileSystem object with an empty tiles object.
-     * @constructor
-     */
+	 * @constructor
+	 */
 	constructor() {
 		/**
          * Object containing tiles, identified by their coordinates (e.g., "x,y").
@@ -160,12 +151,10 @@ class TileSystem {
 const Tiles = new TileSystem();
 
 /**
- * Class representing a Client that extends EventEmitter.
  * @extends EventEmitter
  */
 class Client extends EventEmitter {
 	/**
-     * Constructs a new Client object with optional configuration options.
      * @param {Object} [options={}] - Configuration options for the client.
      * @param {string} [options.world=''] - The world identifier.
      * @param {string} [options.color='0'] - The default color for the player.
