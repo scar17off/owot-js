@@ -392,43 +392,25 @@ class Client extends EventEmitter {
 			 * @param {number} [charY=0] - The target y-coordinate of the character within the tile.
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
 			 */
-			move: (tileX = 0, tileY = 0, charX = 0, charY = 0) => {
+			move: (tileX = 0, tileY = 0, charX = undefined, charY = undefined) => {
 				if (this.net.ws.readyState !== 1) return false;
+
+				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
+					[tileX, tileY] = this.util.convertXY(tileX, tileY);
+					charX = 0;
+					charY = 0;
+				}
 
 				this.net.ws.send(JSON.stringify({
 					"kind": "cursor",
 					"position": {
-						tileY,
 						tileX,
-						charY,
-						charX
+						tileY,
+						charX,
+						charY
 					},
 					"channel": this.player.channel
 				}));
-
-				this.player.setPosition(tileX, tileY, charX, charY);
-
-				return true;
-			},
-			/**
-			 * Update the cursor position based on character coordinates.
-			 *
-			 * @param {number} [charX=0] - The x-coordinate of the character within its tile (default is 0).
-			 * @param {number} [charY=0] - The y-coordinate of the character within its tile (default is 0).
-			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
-			 */
-			moveXY: (charX = 0, charY = 0) => {
-				if (this.net.ws.readyState !== 1) return false;
-
-				const [tileX, tileY] = this.util.convertXY(charX, charY);
-
-				this.net.ws.send(JSON.stringify({
-					kind: "cursor",
-					position: { tileX, tileY, charX, charY },
-					channel: this.player.channel
-				}));
-
-				this.player.setPosition(tileX, tileY, charX, charY);
 
 				return true;
 			},
@@ -446,9 +428,14 @@ class Client extends EventEmitter {
 			 */
 			writeChar: (char, color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
-				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
 				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
+
+				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
+					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
+				}
+
+				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
 
 				this.net.ws.send(JSON.stringify({
 					"kind": "write",
@@ -460,242 +447,50 @@ class Client extends EventEmitter {
 							charY,
 							this.player.color,
 							char,
-							1 // sequence
+							1
 						]
 					]
 				}));
 
-				this.player.setPosition(tileX, tileY, charX, charY);
-
 				return true;
 			},
 			/**
-			 * Write a character at specified coordinates.
-			 * Updates player position and color if provided.
-			 *
-			 * @param {string} char - The character to be written.
-			 * @param {string} [color] - The color of the character. If provided, updates the player's color.
-			 * @param {number} charX - The x-coordinate of the character within its tile.
-			 * @param {number} charY - The y-coordinate of the character within its tile.
-			 * @returns {boolean} - Returns true if the WebSocket connection is open, the player has enough quota, and the message is sent successfully; otherwise, returns false.
-			 */
-			writeCharXY: (char, color, charX, charY) => {
-				if (this.net.ws.readyState !== 1) return false;
-				if (!this.player.quota.canSpend(1)) return false;
-				if (color) this.player.color = color;
-
-				var [tileX, tileY, charX, charY] = this.util.convertXY(charX, charY);
-				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
-
-				this.net.ws.send(JSON.stringify({
-					"kind": "write",
-					"edits": [
-						[
-							tileY,
-							tileX,
-							charY,
-							charX,
-							this.player.color,
-							char,
-							1 // sequence
-						]
-					]
-				}));
-
-				this.player.setPosition(tileX, tileY, charX, charY);
-
-				return true;
-			},
-			/**
-			 * Asynchronously writes a character at specified coordinates
-			 * Updates quota and waits if allowance is 0 before attempting to write.
-			 *
-			 * @async
-			 * @param {string} char - The character to be written.
-			 * @param {number} x - The x-coordinate of the character.
-			 * @param {number} y - The y-coordinate of the character.
-			 */
-			writeCharXY2: async (char, x, y) => {
-				this.player.quota.update();
-				if(this.player.quota.allowance === 0) {
-					await new Promise(resolve => setTimeout(resolve, this.player.quota.getTimeToRestore()));
-					this.player.quota.update();
-				}
-				const currentChar = await this.world.getCharXY(x, y);
-				if(char !== currentChar) {
-					this.world.writeCharXY(char, this.player.color, x, y);
-				}
-			},
-			/**
-			 * Write a string from specified coordinates.
-			 * Updates player position and deducts quota based on the length of the string.
-			 *
-			 * @param {string} str - The string to be written to the grid.
-			 * @param {string|null} color - The color to be applied to the characters in the string. If null, the player's color remains unchanged.
-			 * @param {number} startTileX - The x-coordinate of the starting tile for writing.
-			 * @param {number} startTileY - The y-coordinate of the starting tile for writing.
-			 * @param {number} startCharX - The x-coordinate of the starting character within the starting tile.
-			 * @param {number} startCharY - The y-coordinate of the starting character within the starting tile.
-			 * @returns {boolean} - Returns true if the WebSocket connection is open, the player has sufficient quota, and the message is sent successfully; otherwise, returns false.
-			 */
-			writeString: (str, color, startTileX, startTileY, startCharX, startCharY) => {
-				if (this.net.ws.readyState !== 1) return false;
-				if (!this.player.quota.canSpend(1)) return false;
-
-				const edits = [];
-				let currentTileX = startTileX;
-				let currentTileY = startTileY;
-				let currentCharX = startCharX;
-				let currentCharY = startCharY;
-
-				if (color) this.player.color = color;
-
-				for (let i = 0; i < str.length; i++) {
-					var char = str[i];
-					const currentChar = Tiles.getChar(currentCharX, currentCharY, Tiles.getTile(currentTileX, currentTileY));
-
-					if (char == '\n') {
-						currentCharX = startCharX;
-						currentTileX = startTileX;
-						currentCharY++;
-
-						if (currentCharY == 16) {
-							currentTileY++;
-							currentCharY = 0;
-						}
-
-						continue;
-					}
-
-					if (char !== currentChar)
-						edits.push([
-							currentTileY,
-							currentTileX,
-							currentCharY,
-							currentCharX,
-							this.player.color,
-							char,
-							i + 1 // sequence
-						]);
-
-					currentCharX++;
-
-					if (currentCharX == 16) {
-						currentTileX++;
-						currentCharX = 0;
-					}
-				}
-
-				if (edits.length > 0) {
-					this.net.ws.send(JSON.stringify({
-						"kind": "write",
-						"edits": edits
-					}));
-				}
-
-				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
-
-				return true;
-			},
-			/**
-			 * Write a string at the specified coordinates with optional color.
-			 * The method calculates the tile and character positions based on provided (x, y) coordinates.
-			 * If the WebSocket connection is not open or the player's quota is insufficient, the method returns false.
+			 * Write a string at specified coordinates, with optional color.
 			 *
 			 * @param {string} str - The string to be written.
-			 * @param {string|null} color - The color to apply to the text, or null for default color.
-			 * @param {number} x - The x-coordinate where the string should start.
-			 * @param {number} y - The y-coordinate where the string should start.
-			 * @returns {boolean} - Returns true if the WebSocket connection is open, the player's quota allows spending, and the message is sent successfully; otherwise, returns false.
+			 * @param {string} color - The color to be applied to the string (optional).
+			 * @param {number} tileX - The x-coordinate of the tile where the string will start.
+			 * @param {number} tileY - The y-coordinate of the tile where the string will start.
+			 * @param {number} charX - The x-coordinate of the first character within its tile.
+			 * @param {number} charY - The y-coordinate of the first character within its tile.
+			 * @returns {boolean} - Returns true if all characters are written successfully; otherwise, returns false.
 			 */
-			writeStringXY: (str, color, x, y) => {
+			writeString: (str, color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== 1) return false;
-				if (!this.player.quota.canSpend(1)) return false;
-
-				const [tileX, tileY, charX, charY] = this.util.convertXY(x, y);
-				const startTileX = tileX;
-				const startTileY = tileY;
-				const startCharX = charX;
-				const startCharY = charY;
-
-				const edits = [];
-				let currentTileX = startTileX;
-				let currentTileY = startTileY;
-				let currentCharX = startCharX;
-				let currentCharY = startCharY;
-
+				if (!this.player.quota.canSpend(str.length)) return false;
 				if (color) this.player.color = color;
 
+				const startX = tileX;
+				const startY = tileY;
+
+				if (typeof charX === 'undefined' && typeof charY === 'undefined') {
+					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
+				}
+
+				let offsetX = 0, offsetY = 0;
+
 				for (let i = 0; i < str.length; i++) {
-					var char = str[i];
-					const currentChar = Tiles.getChar(currentCharX, currentCharY, Tiles.getTile(currentTileX, currentTileY));
-
-					if (char == '\n') {
-						currentCharX = startCharX;
-						currentTileX = startTileX;
-						currentCharY++;
-
-						if (currentCharY == 16) {
-							currentTileY++;
-							currentCharY = 0;
-						}
-
-						continue;
-					}
-
-					if (char !== currentChar)
-						edits.push([
-							currentTileY,
-							currentTileX,
-							currentCharY,
-							currentCharX,
-							this.player.color,
-							char,
-							i + 1 // sequence
-						]);
-
-					currentCharX++;
-
-					if (currentCharX == 16) {
-						currentTileX++;
-						currentCharX = 0;
+					const char = str.charAt(i);
+					if(char === '\n') {
+						offsetX = 0;
+						offsetY++;
+					} else {
+						this.world.writeChar(char, this.player.color, startX + offsetX, startY + offsetY);
+						offsetX++;
 					}
 				}
-
-				if (edits.length > 0) {
-					this.net.ws.send(JSON.stringify({
-						"kind": "write",
-						"edits": edits
-					}));
-				}
-
-				this.player.setPosition(currentTileX, currentTileY, currentCharX - 1, currentCharY);
 
 				return true;
-			},
-			/**
-			 * Write a string at specified coordinates.
-			 *
-			 * @param {string} str - The string to be written.
-			 * @param {number} x - The x-coordinate where the string starts.
-			 * @param {number} y - The y-coordinate where the string starts.
-			 */
-			writeStringXY2: async (str, x, y) => {
-				let i = 0;
-				while(i < str.length) {
-					this.player.quota.update();
-					const charsToWrite = Math.floor(this.player.quota.allowance);
-					const end = Math.min(i + charsToWrite, str.length);
-					if(this.player.quota.allowance === 0) {
-						await new Promise(resolve => setTimeout(resolve, this.player.quota.getTimeToRestore()));
-					}
-					for(; i < end; i++) {
-						const currentChar = await this.world.getCharXY(x + i, y);
-						if(char !== currentChar) {
-							this.world.writeCharXY(str[i], this.player.color, x + i, y);
-						}
-					}
-				}
 			},
 			/**
 			 * Protect a tile with a specified protection type.
@@ -810,7 +605,7 @@ class Client extends EventEmitter {
 				let charX = x % 16;
 				let charY = y % 8;
 
-				return [tileX, tileY, charX, charY];
+				return [tileX, tileY, charY, charX];
 			},
 			/**
 			 * Converts tile and character coordinates to a flat position.
