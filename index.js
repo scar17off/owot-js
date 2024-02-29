@@ -6,7 +6,7 @@ if (isBrowser) {
 	EventEmitter = require("events");
 	WebSocket = require("ws");
 	Chalk = require("chalk");
-};
+}
 
 class CharRate {
 	/**
@@ -122,8 +122,8 @@ class TileSystem {
 	 * @returns {string|null} - The character at the specified coordinates, or null if not found.
 	 */
 	getChar(x, y, tile) {
-		if (tile && tile[y] && tile[y][x])
-			return tile[y][x];
+		if (tile && tile[x] && tile[x][y])
+			return tile[x][y];
 		return null; // or any default value
 	}
 	/**
@@ -260,18 +260,17 @@ class Client extends EventEmitter {
 			/**
 			 * Sends a chat message through the WebSocket connection.
 			 * @param {string} message - The message to be sent.
-			 * @param {string} [color] - The color of the message.
 			 * @param {boolean} [global=false] - Indicates whether the message is global.
 			 * @returns {boolean} - Returns true if the message was sent successfully, false otherwise.
 			 */
-			send: (message, color, global = false) => {
+			send: (message, global = false) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return;
 
 				this.net.ws.send(JSON.stringify({
 					kind: "chat",
 					message: message,
 					location: global ? "global" : "page",
-					color: typeof color == 'undefined' ? this.player.chatColor : color,
+					color: this.player.chatColor,
 					nickname: this.player.nickname
 				}));
 
@@ -281,18 +280,42 @@ class Client extends EventEmitter {
 		this.world = {
 			userCount: 0,
 			leave: () => {
-				if (this.net.ws.readyState !== WebSocket.OPEN) return;
 				this.net.ws.close();
 				this.emit("close");
 			},
 			/**
-			 * Retrieves the tile at the specified coordinates (tileX, tileY).
-			 * @param {number} tileX - The x-coordinate of the tile.
-			 * @param {number} tileY - The y-coordinate of the tile.
-			 * @returns {Array.<Array.<string>>|null} - The tile represented as a 2D array, or null if not found.
+			 * Request the content of a tile at specified coordinates.
+			 * If the content is already available locally, it returns the tile content immediately.
+			 * Otherwise, it sends a fetch request to the server and returns a Promise that resolves with the fetched tile content.
+			 *
+			 * @param {number} [tileX] - The x-coordinate of the requested tile.
+			 * @param {number} [tileY] - The y-coordinate of the requested tile.
+			 * @returns {Promise<Array.<Array.<string>>>|Array.<Array.<string>>|boolean} - If the content is available locally, returns the tile content.
+			 *                                                                            If the WebSocket connection is not open, returns false.
+			 *                                                                            Otherwise, returns a Promise that resolves with the fetched tile content.
 			 */
 			getTile: (tileX, tileY) => {
-				return Tiles.chunks[`${tileX},${tileY}`];
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
+				const existingTile = Tiles.getTile(tileX, tileY);
+				if (existingTile) return existingTile;
+
+				return new Promise((resolve, reject) => {
+					this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
+
+					const fn = (...args) => {
+						const updates = args[0];
+
+						for (const update in updates) {
+							const [tileUpdateY, tileUpdateX] = update.split(",").map(coord => parseInt(coord)); // first coord in key name is Y somewhy
+							if (tileUpdateX !== tileX || tileUpdateY !== tileY) continue;
+							this.off("fetch", fn);
+							const content = updates[update].content;
+							Tiles.saveTile(`${tileX},${tileY}`, content);
+							resolve(Tiles.getTile(tileX, tileY));
+						}
+					}
+					this.on("fetch", fn);
+				});
 			},
 			/**
 			* Retrieves the character at the specified coordinates (tileX, tileY, charX, charY) from the world.
@@ -303,72 +326,52 @@ class Client extends EventEmitter {
 			* @returns {Promise<string>} - A promise that resolves to the character at the specified coordinates.
 			*/
 			getChar: async (tileX, tileY, charX, charY) => {
-				const tile = await this.world.requestTileXY(tileX, tileY);
+				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
+					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
+				}
 
-				return tile[charX][charY];
+				charX = Math.abs(charX);
+				charY = Math.abs(charY);
+
+				const tile = await this.world.getTile(tileX, tileY);
+
+				return Tiles.getChar(charX, charY, tile);
 			},
 			/**
-			 * Retrieves the character at the specified coordinates within the world asynchronously.
-			 *
-			 * @param {number} charX - The x-coordinate of the character.
-			 * @param {number} charY - The y-coordinate of the character.
-			 * @returns {Promise<string>} - A Promise that resolves to the character at the specified coordinates.
-			 */
-			getCharXY: async (charX, charY) => {
-				var [tileX, tileY, charY, charX] = this.util.convertXY(charX, charY);
-
-				const tile = await this.world.requestTileXY(tileX, tileY);
-
-				return tile[charX][charY];
-			},
-			/**
-			 * Request content within a specified rectangular region.
+			 * Request content within a specified rectangular region and returns a Promise that resolves with the fetched chunks.
 			 *
 			 * @param {number} minX - The minimum x-coordinate of the rectangular region.
 			 * @param {number} minY - The minimum y-coordinate of the rectangular region.
 			 * @param {number} maxX - The maximum x-coordinate of the rectangular region.
 			 * @param {number} maxY - The maximum y-coordinate of the rectangular region.
-			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
+			 * @returns {Promise<any>} - A Promise that resolves with the fetched chunks if the WebSocket connection is open; otherwise, rejects with an error.
 			 */
 			requestRectangle: (minX, minY, maxX, maxY) => {
-				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
-
-				this.net.ws.send(JSON.stringify({
-					fetchRectangles: [{
-						minX,
-						minY,
-						maxX,
-						maxY
-					}],
-					kind: "fetch"
-				}));
-			},
-			/**
-			 * Request the content of a tile at specified coordinates.
-			 * If the content is already available locally, it returns the tile content immediately.
-			 * Otherwise, it sends a fetch request to the server and returns a Promise that resolves with the fetched tile content.
-			 *
-			 * @param {number} [tileX=0] - The x-coordinate of the requested tile (default is 0).
-			 * @param {number} [tileY=0] - The y-coordinate of the requested tile (default is 0).
-			 * @returns {Promise<Array.<Array.<string>>>|Array.<Array.<string>>|boolean} - If the content is available locally, returns the tile content.
-			 *                                                                            If the WebSocket connection is not open, returns false.
-			 *                                                                            Otherwise, returns a Promise that resolves with the fetched tile content.
-			 */
-			requestTileXY: (tileX = 0, tileY = 0) => {
-				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
-				if (Tiles.getTile(tileX, tileY)) return Tiles.getTile(tileX, tileY);
-
 				return new Promise((resolve, reject) => {
-					this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
+					if (this.net.ws.readyState !== WebSocket.OPEN) reject(new Error("WebSocket connection is not open"));
+
+					this.net.ws.send(JSON.stringify({
+						fetchRectangles: [{
+							minX,
+							minY,
+							maxX,
+							maxY
+						}],
+						kind: "fetch"
+					}));
 
 					const fn = (...args) => {
 						const updates = args[0];
-
+						let fetchedChunks = [];
 						for (const update in updates) {
-							const [tileUpdateY, tileUpdateX] = update.split(",").map(coord => parseInt(coord)); // first coord in key name is Y somewhy
-							if (tileUpdateX !== tileX || tileUpdateY !== tileY) return;
+							const [updateMinY, updateMinX, updateMaxY, updateMaxX] = update.split(",").map(coord => parseInt(coord));
+							if (updateMinX >= minX && updateMinY >= minY && updateMaxX <= maxX && updateMaxY <= maxY) {
+								fetchedChunks.push(updates[update]);
+							}
+						}
+						if (fetchedChunks.length > 0) {
 							this.off("fetch", fn);
-							resolve(Tiles.wrapStringTo16x16(updates[update].content));
+							resolve(fetchedChunks);
 						}
 					}
 					this.on("fetch", fn);
@@ -426,7 +429,7 @@ class Client extends EventEmitter {
 					[tileX, tileY, charY, charX] = this.util.convertXY(tileX, tileY);
 				}
 
-				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
+				if (Tiles.getChar(charX, charY, this.world.getTile(tileX, tileY)) == char) return false;
 
 				const editMessage = this.world.editMessage(this.world.createEditItem(char, color, tileX, tileY, charX, charY));
 
@@ -456,14 +459,12 @@ class Client extends EventEmitter {
 				const chunks = this.util.chunkifyString(str, this.player.quota.rate);
 				let offsetX = 0, offsetY = 0, tileOffsetX = 0;
 
+				const editItems = [];
+
 				for (const chunk of chunks) {
 					if (!this.player.quota.canSpend(chunk.length)) {
-						console.log("waiting");
 						await this.player.quota.waitUntilRestore();
 					}
-					console.log("placing")
-
-					const editItems = [];
 
 					for (let i = 0; i < chunk.length; i++) {
 						const char = chunk.charAt(i);
@@ -486,14 +487,15 @@ class Client extends EventEmitter {
 							}
 						}
 					}
-
-					if (editItems.length > 0) {
-						const editMessage = this.world.editMessage(editItems);
-
-						this.net.ws.send(JSON.stringify(editMessage));
-					}
-
 				}
+
+				const editMessage = this.world.editMessage(editItems);
+
+				for(const edit of editMessage) {
+					this.net.ws.send(JSON.stringify(edit));
+					await this.player.quota.waitUntilRestore();
+				}
+
 				return true;
 			},
 			/**
@@ -517,13 +519,13 @@ class Client extends EventEmitter {
 				return [
 					tileY,
 					tileX,
-					charX,
 					charY,
+					charX,
 					color,
 					char,
 					this.net.ws.sequence++,
 					color
-				]
+				];
 			},
 			/**
 			 * Constructs an edit message object.
@@ -532,10 +534,15 @@ class Client extends EventEmitter {
 			 * @returns {object} An object representing the edit message.
 			 */
 			editMessage: (editItems) => {
-				return {
-					kind: "write",
-					edits: editItems
+				const MAX_EDITS_PER_MESSAGE = this.player.quota.rate;
+				let messages = [];
+				for (let i = 0; i < editItems.length; i += MAX_EDITS_PER_MESSAGE) {
+					messages.push({
+						kind: "write",
+						edits: editItems.slice(i, i + MAX_EDITS_PER_MESSAGE)
+					});
 				}
+				return messages;
 			},
 			/**
 			 * Protect a tile with a specified protection type.
@@ -663,7 +670,10 @@ class Client extends EventEmitter {
 				let charX = x % 16;
 				let charY = y % 8;
 
-				return [tileX, tileY, charY, charX];
+				charX = Math.abs(charX);
+				charY = Math.abs(charY);
+
+				return [tileX, tileY, charX, charY];
 			},
 			/**
 			 * Converts tile and character coordinates to a flat position.
