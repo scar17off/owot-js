@@ -10,13 +10,13 @@ if (isBrowser) {
 
 class CharRate {
 	/**
- 		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
- 		* @param {number} time - The time unit in milliseconds over which the rate is applied.
- 		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
- 		*                            If true, the allowance is not limited and remains constant.
- 		*                            If false, the allowance is updated based on the rate and time.
- 		* @constructor
- 	 */
+		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
+		* @param {number} time - The time unit in milliseconds over which the rate is applied.
+		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
+		*                            If true, the allowance is not limited and remains constant.
+		*                            If false, the allowance is updated based on the rate and time.
+		* @constructor
+	*/
 	constructor(rate, time, infinite) {
 		this.lastCheck = Date.now();
 		this.allowance = rate;
@@ -25,9 +25,9 @@ class CharRate {
 		this.infinite = infinite;
 	}
 	/**
- 		* Updates the allowance based on the elapsed time since the last check.
- 		* Adjusts the allowance according to the rate and time constraints.
- 	 */
+			* Updates the allowance based on the elapsed time since the last check.
+			* Adjusts the allowance according to the rate and time constraints.
+	   */
 	update() {
 		const currentTime = Date.now();
 		this.allowance += (currentTime - this.lastCheck) * (this.rate / this.time);
@@ -59,21 +59,21 @@ class CharRate {
 		return true;
 	}
 	/**
- 		* Calculates the time remaining until the allowance is fully restored to the specified rate.
- 		* If the allowance is already equal to or greater than the rate, returns 0.
- 		*
- 		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
- 	 */
+			* Calculates the time remaining until the allowance is fully restored to the specified rate.
+			* If the allowance is already equal to or greater than the rate, returns 0.
+			*
+			* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
+	   */
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
 	}
 	/**
- 		* Waits asynchronously until the allowance is fully restored to the specified rate.
- 		* It uses the getTimeToRestore method to determine the wait time.
- 		*
- 		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
- 	 */
+			* Waits asynchronously until the allowance is fully restored to the specified rate.
+			* It uses the getTimeToRestore method to determine the wait time.
+			*
+			* @returns {Promise<void>} - Resolves once the allowance is fully restored.
+	   */
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
 		await new Promise(resolve => setTimeout(resolve, restoreTime));
@@ -86,16 +86,16 @@ class TileSystem {
 	 */
 	constructor() {
 		/**
-         * Object containing tiles, identified by their coordinates (e.g., "x,y").
-         * @type {Object.<string, Array.<Array.<string>>>}
-         */
+		 * Object containing tiles, identified by their coordinates (e.g., "x,y").
+		 * @type {Object.<string, Array.<Array.<string>>>}
+		 */
 		this.tiles = {}
 	}
 	/**
-     * Wraps a given input string into a 16x16 grid represented as a 2D array.
-     * @param {string} inputString - The input string to wrap into a 16x16 grid.
-     * @returns {Array.<Array.<string>>} - A 2D array representing the wrapped 16x16 grid.
-     */
+	 * Wraps a given input string into a 16x16 grid represented as a 2D array.
+	 * @param {string} inputString - The input string to wrap into a 16x16 grid.
+	 * @returns {Array.<Array.<string>>} - A 2D array representing the wrapped 16x16 grid.
+	 */
 	wrapStringTo16x16(inputString) {
 		const result = [];
 		let index = 0;
@@ -115,32 +115,32 @@ class TileSystem {
 		return result;
 	}
 	/**
-     * Gets the character at the specified coordinates (x, y) within a given tile.
-     * @param {number} x - The x-coordinate of the character within the tile.
-     * @param {number} y - The y-coordinate of the character within the tile.
-     * @param {Array.<Array.<string>>} tile - The tile represented as a 2D array.
-     * @returns {string|null} - The character at the specified coordinates, or null if not found.
-     */
+	 * Gets the character at the specified coordinates (x, y) within a given tile.
+	 * @param {number} x - The x-coordinate of the character within the tile.
+	 * @param {number} y - The y-coordinate of the character within the tile.
+	 * @param {Array.<Array.<string>>} tile - The tile represented as a 2D array.
+	 * @returns {string|null} - The character at the specified coordinates, or null if not found.
+	 */
 	getChar(x, y, tile) {
 		if (tile && tile[y] && tile[y][x])
 			return tile[y][x];
 		return null; // or any default value
 	}
 	/**
-     * Retrieves the tile at the specified coordinates (x, y) from the tiles object.
-     * @param {number} x - The x-coordinate of the tile.
-     * @param {number} y - The y-coordinate of the tile.
-     * @returns {Array.<Array.<string>>|null} - The tile represented as a 2D array, or null if not found.
-     */
+	 * Retrieves the tile at the specified coordinates (x, y) from the tiles object.
+	 * @param {number} x - The x-coordinate of the tile.
+	 * @param {number} y - The y-coordinate of the tile.
+	 * @returns {Array.<Array.<string>>|null} - The tile represented as a 2D array, or null if not found.
+	 */
 	getTile(x, y) {
 		return this.tiles[`${x},${y}`] || null;
 	}
 	/**
-     * Saves a tile with the given key and content into the tiles object.
-     * @param {string} key - The key identifying the tile (e.g., "x,y").
-     * @param {string} content - The content to be wrapped into a 16x16 grid and saved as a tile.
-     * @returns {void}
-     */
+	 * Saves a tile with the given key and content into the tiles object.
+	 * @param {string} key - The key identifying the tile (e.g., "x,y").
+	 * @param {string} content - The content to be wrapped into a 16x16 grid and saved as a tile.
+	 * @returns {void}
+	 */
 	saveTile(key, content) {
 		const tile = this.wrapStringTo16x16(content);
 
@@ -155,32 +155,33 @@ const Tiles = new TileSystem();
  */
 class Client extends EventEmitter {
 	/**
-     * @param {Object} [options={}] - Configuration options for the client.
-     * @param {string} [options.world=''] - The world identifier.
-     * @param {string} [options.color='0'] - The default color for the player.
-     * @param {boolean} [options.log=true] - Indicates whether logging is enabled.
-     * @param {string} [options.origin='https://ourworldoftext.com/'] - The origin URL.
-     * @param {string} [options.ws] - The WebSocket URL for communication.
-     * @param {string} [options.token] - The authentication token.
-     * @constructor
-     */
+	 * @param {Object} [options={}] - Configuration options for the client.
+	 * @param {string} [options.world=''] - The world identifier.
+	 * @param {string} [options.color='0'] - The default color for the player.
+	 * @param {boolean} [options.log=true] - Indicates whether logging is enabled.
+	 * @param {string} [options.origin='https://ourworldoftext.com/'] - The origin URL.
+	 * @param {string} [options.ws] - The WebSocket URL for communication.
+	 * @param {string} [options.token] - The authentication token.
+	 * @param {string} [options.hide] - Hide user from online user counter.
+	 * @constructor
+	 */
 	constructor(options = {}) {
 		super();
 
 		/**
-         * Player information including nickname, color, id, channel, and position.
-         * @type {Object}
-         * @property {string} nickname - The player's nickname.
-         * @property {string} color - The player's color.
-         * @property {number} id - The player's id.
-         * @property {string|null} channel - The player's channel.
-         * @property {number} tileX - The player's tile x-coordinate.
-         * @property {number} tileY - The player's tile y-coordinate.
-         * @property {number} charX - The player's character x-coordinate.
-         * @property {number} charY - The player's character y-coordinate.
-         * @property {Function} setPosition - Sets the player's position.
-         * @property {Object} quota - Object representing character rate quota using CharRate class.
-         */
+		 * Player information including nickname, color, id, channel, and position.
+		 * @type {Object}
+		 * @property {string} nickname - The player's nickname.
+		 * @property {string} color - The player's color.
+		 * @property {number} id - The player's id.
+		 * @property {string|null} channel - The player's channel.
+		 * @property {number} tileX - The player's tile x-coordinate.
+		 * @property {number} tileY - The player's tile y-coordinate.
+		 * @property {number} charX - The player's character x-coordinate.
+		 * @property {number} charY - The player's character y-coordinate.
+		 * @property {Function} setPosition - Sets the player's position.
+		 * @property {Object} quota - Object representing character rate quota using CharRate class.
+		 */
 
 		this.player = {
 			nickname: '',
@@ -204,7 +205,7 @@ class Client extends EventEmitter {
 		if (!options.color) options.color = '0';
 		if (!options.log) options.log = true;
 		if (!options.origin) options.origin = "https://ourworldoftext.com/";
-		if (!options.ws) options.ws = `wss://ourworldoftext.com/${(options.world == '' ? '' : options.world + '/')}ws/`;
+		options.ws = options.ws || `wss://ourworldoftext.com/${options.world ? options.world + '/' : ''}ws/${options.hide ? '?hide=1' : ''}`;
 
 		this.options = options;
 
@@ -219,6 +220,7 @@ class Client extends EventEmitter {
 		this.net = {
 			ws: new WebSocket(this.options.ws, ...parameters)
 		}
+		this.net.ws.sequence = 1;
 
 		this.net.ws.onopen = () => {
 			this.util.log(`WebSocket connected!`);
@@ -233,7 +235,7 @@ class Client extends EventEmitter {
 				this.emit("tileUpdate", data.tiles);
 
 				for (const update in data.tiles) {
-					if(!data.tiles[update]) return;
+					if (!data.tiles[update]) return;
 					const content = data.tiles[update].content;
 
 					Tiles.saveTile(update, content);
@@ -263,7 +265,7 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the message was sent successfully, false otherwise.
 			 */
 			send: (message, color, global = false) => {
-				if (this.net.ws.readyState !== 1) return;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return;
 
 				this.net.ws.send(JSON.stringify({
 					kind: "chat",
@@ -279,7 +281,7 @@ class Client extends EventEmitter {
 		this.world = {
 			userCount: 0,
 			leave: () => {
-				if (this.net.ws.readyState !== 1) return;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return;
 				this.net.ws.close();
 				this.emit("close");
 			},
@@ -313,7 +315,7 @@ class Client extends EventEmitter {
 			 * @returns {Promise<string>} - A Promise that resolves to the character at the specified coordinates.
 			 */
 			getCharXY: async (charX, charY) => {
-				var [tileX, tileY, charX, charY] = this.util.convertXY(charX, charY);
+				var [tileX, tileY, charY, charX] = this.util.convertXY(charX, charY);
 
 				const tile = await this.world.requestTileXY(tileX, tileY);
 
@@ -329,7 +331,7 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
 			 */
 			requestRectangle: (minX, minY, maxX, maxY) => {
-				if (this.net.ws.readyState !== 1) return false;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				this.net.ws.send(JSON.stringify({
 					fetchRectangles: [{
@@ -353,7 +355,7 @@ class Client extends EventEmitter {
 			 *                                                                            Otherwise, returns a Promise that resolves with the fetched tile content.
 			 */
 			requestTileXY: (tileX = 0, tileY = 0) => {
-				if (this.net.ws.readyState !== 1) return false;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 				if (Tiles.getTile(tileX, tileY)) return Tiles.getTile(tileX, tileY);
 
 				return new Promise((resolve, reject) => {
@@ -382,7 +384,7 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
 			 */
 			move: (tileX = 0, tileY = 0, charX = undefined, charY = undefined) => {
-				if (this.net.ws.readyState !== 1) return false;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
 					[tileX, tileY] = this.util.convertXY(tileX, tileY);
@@ -415,31 +417,20 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, the character is different from the existing one,
 			 *                     the player has enough quota to spend, and the message is sent successfully; otherwise, returns false.
 			 */
-			writeChar: (char, color, tileX, tileY, charX, charY) => {
-				if (this.net.ws.readyState !== 1) return false;
+			writeChar: (char = ' ', color, tileX, tileY, charX, charY) => {
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
 
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
-					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
+					[tileX, tileY, charY, charX] = this.util.convertXY(tileX, tileY);
 				}
 
 				if (Tiles.getChar(charX, charY, Tiles.getTile(tileX, tileY)) == char) return false;
 
-				this.net.ws.send(JSON.stringify({
-					"kind": "write",
-					"edits": [
-						[
-							tileX,
-							tileY,
-							charX,
-							charY,
-							this.player.color,
-							char,
-							1
-						]
-					]
-				}));
+				const editMessage = this.world.editMessage(this.world.createEditItem(char, color, tileX, tileY, charX, charY));
+
+				this.net.ws.send(JSON.stringify(editMessage));
 
 				return true;
 			},
@@ -454,32 +445,97 @@ class Client extends EventEmitter {
 			 * @param {number} charY - The y-coordinate of the first character within its tile.
 			 * @returns {boolean} - Returns true if all characters are written successfully; otherwise, returns false.
 			 */
-			writeString: (str, color, tileX, tileY, charX, charY) => {
-				if (this.net.ws.readyState !== 1) return false;
-				if (!this.player.quota.canSpend(str.length)) return false;
+			writeString: async (str = ' ', color, tileX, tileY, charX, charY) => {
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 				if (color) this.player.color = color;
 
-				const startX = tileX;
-				const startY = tileY;
-
-				if (typeof charX === 'undefined' && typeof charY === 'undefined') {
+				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
 					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
 				}
 
-				let offsetX = 0, offsetY = 0;
+				const chunks = this.util.chunkifyString(str, this.player.quota.rate);
+				let offsetX = 0, offsetY = 0, tileOffsetX = 0;
 
-				for (let i = 0; i < str.length; i++) {
-					const char = str.charAt(i);
-					if(char === '\n') {
-						offsetX = 0;
-						offsetY++;
-					} else {
-						this.world.writeChar(char, this.player.color, startX + offsetX, startY + offsetY);
-						offsetX++;
+				for (const chunk of chunks) {
+					if (!this.player.quota.canSpend(chunk.length)) {
+						console.log("waiting");
+						await this.player.quota.waitUntilRestore();
 					}
+					console.log("placing")
+
+					const editItems = [];
+
+					for (let i = 0; i < chunk.length; i++) {
+						const char = chunk.charAt(i);
+						if (char === '\n') {
+							offsetX = 0;
+							offsetY++;
+						} else {
+							let [x, y] = this.util.convertPosition(tileX, tileY, charX, charY);
+							x += offsetX;
+							y += offsetY;
+							const [newTileX, newTileY, newCharX, newCharY] = this.util.convertXY(x, y);
+
+							const editItem = this.world.createEditItem(char, this.player.color, newTileX + tileOffsetX, newTileY, newCharX, newCharY);
+							editItems.push(editItem);
+
+							offsetX++;
+							if (offsetX >= 16) {
+								offsetX = 0;
+								tileOffsetX++;
+							}
+						}
+					}
+
+					if (editItems.length > 0) {
+						const editMessage = this.world.editMessage(editItems);
+
+						this.net.ws.send(JSON.stringify(editMessage));
+					}
+
+				}
+				return true;
+			},
+			/**
+			 * Create an edit message
+			 *
+			 * @param {string} char - The character to be placed.
+			 * @param {string} color - The color of the character.
+			 * @param {number} tileX - The x-coordinate of the tile to be edited.
+			 * @param {number} tileY - The y-coordinate of the tile to be edited.
+			 * @param {number} charX - The x-coordinate of the character within the tile.
+			 * @param {number} charY - The y-coordinate of the character within the tile.
+			 * @returns {object} - Returns an object containing the edit message.
+			 */
+			createEditItem: (char = ' ', color, tileX, tileY, charX, charY) => {
+				if (color) this.player.color = color;
+
+				if (typeof charX === 'undefined' && typeof charY === 'undefined') {
+					[tileX, tileY, charY, charX] = this.util.convertXY(tileX, tileY);
 				}
 
-				return true;
+				return [
+					tileY,
+					tileX,
+					charX,
+					charY,
+					color,
+					char,
+					this.net.ws.sequence++,
+					color
+				]
+			},
+			/**
+			 * Constructs an edit message object.
+			 *
+			 * @param {Array} editItems - An array of edit items to be included in the message.
+			 * @returns {object} An object representing the edit message.
+			 */
+			editMessage: (editItems) => {
+				return {
+					kind: "write",
+					edits: editItems
+				}
 			},
 			/**
 			 * Protect a tile with a specified protection type.
@@ -491,7 +547,7 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
 			 */
 			protectTile: (type = 'public', tileX, tileY) => {
-				if (this.net.ws.readyState !== 1) return false;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				this.net.ws.send(JSON.stringify({
 					"tileX": tileX,
@@ -512,7 +568,7 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
 			 */
 			createLinkURL: (url, tileX, tileY, charX, charY) => {
-				if (this.net.ws.readyState !== 1) return false;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				this.net.ws.send(JSON.stringify({
 					kind: "link",
@@ -541,7 +597,7 @@ class Client extends EventEmitter {
 			 * @returns {boolean} - Returns true if the WebSocket connection is open and the message is sent successfully; otherwise, returns false.
 			 */
 			createLinkCoordinates: (url, linkTileX, linkTileY, tileX, tileY, charX, charY) => {
-				if (this.net.ws.readyState !== 1) return false;
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				this.net.ws.send(JSON.stringify({
 					kind: "link",
@@ -571,6 +627,19 @@ class Client extends EventEmitter {
 		 */
 		this.util = {
 			/**
+			 * Splits a long string into chunks that fit within the character quota.
+			 * @param {string} message - The message to be split.
+			 * @param {number} quota - The character quota per chunk.
+			 * @returns {Array.<string>} - An array of message chunks that fit within the quota.
+			 */
+			chunkifyString: (message, quota) => {
+				let chunks = [];
+				for (let i = 0, len = message.length; i < len; i += quota) {
+					chunks.push(message.substring(i, i + quota));
+				}
+				return chunks;
+			},
+			/**
 			 * Converts RGB values to a single integer.
 			 *
 			 * @param {number} r - The red component (0-255).
@@ -581,13 +650,13 @@ class Client extends EventEmitter {
 			rgbToInt: (r, g, b) => {
 				return b | g << 8 | r << 16;
 			},
-			 /**
-			 * Converts screen coordinates to tile and character coordinates.
-			 *
-			 * @param {number} x - The x-coordinate on the screen.
-			 * @param {number} y - The y-coordinate on the screen.
-			 * @returns {Array.<number>} - An array containing [tileX, tileY, charX, charY].
-			 */
+			/**
+			* Converts screen coordinates to tile and character coordinates.
+			*
+			* @param {number} x - The x-coordinate on the screen.
+			* @param {number} y - The y-coordinate on the screen.
+			* @returns {Array.<number>} - An array containing [tileX, tileY, charY, charX].
+			*/
 			convertXY: (x, y) => {
 				let tileX = Math.floor(x / 16);
 				let tileY = Math.floor(y / 8);
@@ -640,29 +709,29 @@ if (isBrowser) window.OWOTjs = {
 }
 else {
 	/**
-     * Module exports for the non-browser (Node.js/CommonJS) environment.
-     * @module OWOTjs
-     */
-    module.exports = {
-        /**
-         * The Client class for managing WebSocket connections.
-         * @type {Class}
-         */
-        Client: Client,
-        /**
-         * The CharRate class for managing character rate limitations.
-         * @type {Class}
-         */
-        CharRate: CharRate,
-        /**
-         * The Tiles class for handling tiles and characters.
-         * @type {Class}
-         */
-        Tiles: Tiles,
-        /**
-         * The TileSystem class for managing tiles and their properties.
-         * @type {Class}
-         */
-        TileSystem: TileSystem
-    }
+	 * Module exports for the non-browser (Node.js/CommonJS) environment.
+	 * @module OWOTjs
+	 */
+	module.exports = {
+		/**
+		 * The Client class for managing WebSocket connections.
+		 * @type {Class}
+		 */
+		Client: Client,
+		/**
+		 * The CharRate class for managing character rate limitations.
+		 * @type {Class}
+		 */
+		CharRate: CharRate,
+		/**
+		 * The Tiles class for handling tiles and characters.
+		 * @type {Class}
+		 */
+		Tiles: Tiles,
+		/**
+		 * The TileSystem class for managing tiles and their properties.
+		 * @type {Class}
+		 */
+		TileSystem: TileSystem
+	}
 }
