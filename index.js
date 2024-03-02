@@ -8,7 +8,7 @@ if (isBrowser) {
 	Chalk = require("chalk");
 }
 
-class CharRate {
+class CharQuota {
 	/**
 		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
 		* @param {number} time - The time unit in milliseconds over which the rate is applied.
@@ -59,21 +59,21 @@ class CharRate {
 		return true;
 	}
 	/**
-			* Calculates the time remaining until the allowance is fully restored to the specified rate.
-			* If the allowance is already equal to or greater than the rate, returns 0.
-			*
-			* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
-	   */
+		* Calculates the time remaining until the allowance is fully restored to the specified rate.
+		* If the allowance is already equal to or greater than the rate, returns 0.
+		*
+		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
+	*/
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
 	}
 	/**
-			* Waits asynchronously until the allowance is fully restored to the specified rate.
-			* It uses the getTimeToRestore method to determine the wait time.
-			*
-			* @returns {Promise<void>} - Resolves once the allowance is fully restored.
-	   */
+		* Waits asynchronously until the allowance is fully restored to the specified rate.
+		* It uses the getTimeToRestore method to determine the wait time.
+		*
+		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
+	*/
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
 		await new Promise(resolve => setTimeout(resolve, restoreTime));
@@ -87,26 +87,29 @@ class TileSystem {
 	constructor() {
 		/**
 		 * Object containing tiles, identified by their coordinates (e.g., "x,y").
-		 * @type {Object.<string, Array.<Array.<string>>>}
+		 * @type {Object.<string, Array.<Array.<{char: string, color: string}>>>}
 		 */
 		this.tiles = {}
 	}
 	/**
 	 * Wraps a given input string into a 16x16 grid represented as a 2D array.
 	 * @param {string} inputString - The input string to wrap into a 16x16 grid.
-	 * @returns {Array.<Array.<string>>} - A 2D array representing the wrapped 16x16 grid.
+	 * @param {Array.<string>} color - An array of color strings corresponding to each character in inputString.
+	 * @returns {Array.<Array.<{char: string, color: string}>>} - A 2D array representing the wrapped 16x16 grid, with each cell containing an object with char and color properties.
 	 */
-	wrapStringTo16x16(inputString) {
+	wrapStringTo16x16(inputString, color) {
 		const result = [];
 		let index = 0;
+		if(!color) color = new Array(inputString.length).fill(0);
 
-		for (let i = 0; i < 16; i++) {
-			result[i] = [];
-			for (let j = 0; j < 16; j++) {
+		for (let x = 0; x < 16; x++) {
+			result[x] = [];
+			for (let y = 0; y < 16; y++) {
+				const colorIndex = index;
 				if (index < inputString.length)
-					result[i][j] = inputString[index];
+					result[x][y] = { char: inputString[index], color: color[colorIndex] };
 				else
-					result[i][j] = ' ';
+					result[x][y] = { char: ' ', color: null };
 
 				index++;
 			}
@@ -118,8 +121,8 @@ class TileSystem {
 	 * Gets the character at the specified coordinates (x, y) within a given tile.
 	 * @param {number} x - The x-coordinate of the character within the tile.
 	 * @param {number} y - The y-coordinate of the character within the tile.
-	 * @param {Array.<Array.<string>>} tile - The tile represented as a 2D array.
-	 * @returns {string|null} - The character at the specified coordinates, or null if not found.
+	 * @param {Array.<Array.<{char: string, color: string}>>} tile - The tile represented as a 2D array, with each cell containing an object with char and color properties.
+	 * @returns {{char: string, color: string}|null} - The character and its color at the specified coordinates, or null if not found.
 	 */
 	getChar(x, y, tile) {
 		if (tile && tile[x] && tile[x][y])
@@ -130,7 +133,7 @@ class TileSystem {
 	 * Retrieves the tile at the specified coordinates (x, y) from the tiles object.
 	 * @param {number} x - The x-coordinate of the tile.
 	 * @param {number} y - The y-coordinate of the tile.
-	 * @returns {Array.<Array.<string>>|null} - The tile represented as a 2D array, or null if not found.
+	 * @returns {Array.<Array.<{char: string, color: string}>>|null} - The tile represented as a 2D array, with each cell containing an object with char and color properties, or null if not found.
 	 */
 	getTile(x, y) {
 		return this.tiles[`${x},${y}`] || null;
@@ -139,10 +142,11 @@ class TileSystem {
 	 * Saves a tile with the given key and content into the tiles object.
 	 * @param {string} key - The key identifying the tile (e.g., "x,y").
 	 * @param {string} content - The content to be wrapped into a 16x16 grid and saved as a tile.
+	 * @param {Array.<string>} color - An array of color strings corresponding to each character in content.
 	 * @returns {void}
 	 */
-	saveTile(key, content) {
-		const tile = this.wrapStringTo16x16(content);
+	saveTile(key, content, color) {
+		const tile = this.wrapStringTo16x16(content, color);
 
 		this.tiles[key] = tile;
 	}
@@ -180,13 +184,13 @@ class Client extends EventEmitter {
 		 * @property {number} charX - The player's character x-coordinate.
 		 * @property {number} charY - The player's character y-coordinate.
 		 * @property {Function} setPosition - Sets the player's position.
-		 * @property {Object} quota - Object representing character rate quota using CharRate class.
+		 * @property {Object} quota - Object representing character rate quota using CharQuota class.
 		 */
 
 		this.player = {
 			nickname: '',
 			color: 0,
-			id: 0,
+			id: null,
 			channel: null,
 			tileX: 0,
 			tileY: 0,
@@ -198,7 +202,7 @@ class Client extends EventEmitter {
 				this.player.charX = charX;
 				this.player.charY = charY;
 			},
-			quota: new CharRate(512, 1000)
+			quota: new CharQuota(512, 1000)
 		}
 
 		if (!options.world) options.world = '';
@@ -218,7 +222,18 @@ class Client extends EventEmitter {
 		if (isBrowser) parameters.unshift(null);
 
 		this.net = {
-			ws: new WebSocket(this.options.ws, ...parameters)
+			ws: new WebSocket(this.options.ws, ...parameters),
+			sendWrite: (edits) => {
+				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
+				if(!this.player.quota.canSpend(1)) return false;
+
+				const writeReq = {
+					kind: "write",
+					edits: edits
+				}
+
+				this.net.ws.send(JSON.stringify(writeReq));
+			}
 		}
 		this.net.ws.sequence = 1;
 
@@ -233,14 +248,15 @@ class Client extends EventEmitter {
 			if (data.kind == "chat") this.emit("chat", data);
 			if (data.kind == "tileUpdate" || data.kind == "fetch") {
 				this.emit("tileUpdate", data.tiles);
-
+			
 				for (const update in data.tiles) {
 					if (!data.tiles[update]) return;
 					const content = data.tiles[update].content;
-
-					Tiles.saveTile(update, content);
+					const color = data.tiles[update].properties.color;
+			
+					Tiles.saveTile(update, content, color);
 				}
-
+			
 				if (data.kind == "fetch") this.emit("fetch", data.tiles);
 			}
 			if (data.kind == "user_count") this.world.userCount = data.count;
@@ -255,6 +271,15 @@ class Client extends EventEmitter {
 			this.util.log("WebSocket disconnected!");
 			this.emit("close");
 		}
+		
+		this.writeBuffer = [];
+		this.writeInterval = setInterval(() => {
+			while (this.writeBuffer.length > 0 && this.player.quota.canSpend(1)) {
+				if(!this.writeBuffer.length) return;
+				const edits = this.writeBuffer.splice(0, Math.min(512, this.writeBuffer.length));
+				this.net.sendWrite(edits);
+			}
+		}, this.player.quota.time);
 
 		this.chat = {
 			/**
@@ -310,7 +335,8 @@ class Client extends EventEmitter {
 							if (tileUpdateX !== tileX || tileUpdateY !== tileY) continue;
 							this.off("fetch", fn);
 							const content = updates[update].content;
-							Tiles.saveTile(`${tileX},${tileY}`, content);
+							const color = updates[update].color; // Extract color information
+							Tiles.saveTile(`${tileX},${tileY}`, content, color);
 							resolve(Tiles.getTile(tileX, tileY));
 						}
 					}
@@ -418,7 +444,7 @@ class Client extends EventEmitter {
 			 * @param {number} charX - The x-coordinate of the character within its tile.
 			 * @param {number} charY - The y-coordinate of the character within its tile.
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, the character is different from the existing one,
-			 *                     the player has enough quota to spend, and the message is sent successfully; otherwise, returns false.
+			 *                     the player has enough quota to spend, and the message is added to the write buffer successfully; otherwise, returns false.
 			 */
 			writeChar: (char = ' ', color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
@@ -426,14 +452,13 @@ class Client extends EventEmitter {
 				if (color) this.player.color = color;
 
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
-					[tileX, tileY, charY, charX] = this.util.convertXY(tileX, tileY);
+					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
 				}
 
 				if (Tiles.getChar(charX, charY, this.world.getTile(tileX, tileY)) == char) return false;
 
-				const editMessage = this.world.editMessage(this.world.createEditItem(char, color, tileX, tileY, charX, charY));
-
-				this.net.ws.send(JSON.stringify(editMessage));
+				const editItem = this.world.createEditItem(char, color, tileX, tileY, charX, charY);
+				this.writeBuffer.push(editItem);
 
 				return true;
 			},
@@ -446,7 +471,7 @@ class Client extends EventEmitter {
 			 * @param {number} tileY - The y-coordinate of the tile where the string will start.
 			 * @param {number} charX - The x-coordinate of the first character within its tile.
 			 * @param {number} charY - The y-coordinate of the first character within its tile.
-			 * @returns {boolean} - Returns true if all characters are written successfully; otherwise, returns false.
+			 * @returns {boolean} - Returns true if all characters are added to the write buffer successfully; otherwise, returns false.
 			 */
 			writeString: async (str = ' ', color, tileX, tileY, charX, charY) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
@@ -458,8 +483,6 @@ class Client extends EventEmitter {
 
 				const chunks = this.util.chunkifyString(str, this.player.quota.rate);
 				let offsetX = 0, offsetY = 0, tileOffsetX = 0;
-
-				const editItems = [];
 
 				for (const chunk of chunks) {
 					if (!this.player.quota.canSpend(chunk.length)) {
@@ -478,7 +501,7 @@ class Client extends EventEmitter {
 							const [newTileX, newTileY, newCharX, newCharY] = this.util.convertXY(x, y);
 
 							const editItem = this.world.createEditItem(char, this.player.color, newTileX + tileOffsetX, newTileY, newCharX, newCharY);
-							editItems.push(editItem);
+							this.writeBuffer.push(editItem);
 
 							offsetX++;
 							if (offsetX >= 16) {
@@ -487,13 +510,6 @@ class Client extends EventEmitter {
 							}
 						}
 					}
-				}
-
-				const editMessage = this.world.editMessage(editItems);
-
-				for(const edit of editMessage) {
-					this.net.ws.send(JSON.stringify(edit));
-					await this.player.quota.waitUntilRestore();
 				}
 
 				return true;
@@ -729,10 +745,10 @@ else {
 		 */
 		Client: Client,
 		/**
-		 * The CharRate class for managing character rate limitations.
+		 * The CharQuota class for managing character rate limitations.
 		 * @type {Class}
 		 */
-		CharRate: CharRate,
+		CharQuota: CharQuota,
 		/**
 		 * The Tiles class for handling tiles and characters.
 		 * @type {Class}
