@@ -26,7 +26,7 @@ bot.on("join", () => {
 `ws` - ws url (default: `wss://ourworldoftext.com/ws/`)  
 `nickname` - client nickname  
 `world` - world  (default: `main`)  
-`token` - uvias token
+`token` - uvias token  
 `log` - logging enabled or not (default: `true`)
 # Module
 ### Requiring the library returns an object with:  
