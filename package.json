@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"keywords": [
 		"owot-js",
-		"ourworldoftext"
+		"ourworldoftext",
+		"owot-js-client"
 	],
 	"author": "scar17off",
 	"dependencies": {

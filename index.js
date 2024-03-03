@@ -189,6 +189,7 @@ class Client extends EventEmitter {
 
 		this.player = {
 			nickname: '',
+			chatColor: 0,
 			color: 0,
 			id: null,
 			channel: null,

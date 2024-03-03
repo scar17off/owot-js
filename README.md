@@ -27,6 +27,7 @@ bot.on("join", () => {
 `nickname` - client nickname  
 `world` - world  (default: `main`)  
 `token` - uvias token
+`log` - logging enabled or not (default: `true`)
 # Module
 ### Requiring the library returns an object with:  
 `Client` - main client class  
@@ -48,57 +49,50 @@ bot.on("join", () => {
 - `quota`
 
 ### Client.chat
-#### **Client.chat.send(msg, color, global)**
-Send message in chat. Local by default.
+#### **Client.chat.send(msg, global = false)**
+Sends a chat message.
 
 ### Client.world
-#### **Client.world.getTile(tileX, tileY)**
-Get tile data.
-#### **Client.world.getChar(tileX, tileY, charX, charY)**
-Get char.
-#### **Client.world.getCharXY(charX, charY)**
-Get char by XY
-#### **Client.world.requestRectangle(minX, minY, maxX, maxY)**
-Request rectangle area and store characters to TileSystem
-#### **Client.world.requestTileXY(tileX, tileY)**
-Request tile by XY, store data to TileSystem and return data
-#### **Client.world.move(tileX, tileY, charX, charY)**
-Move client to position
-#### **Client.world.moveXY(charX, charY)**
-Move client to char XY
-#### **Client.world.writeChar(char, color, tileX, tileY, charX, charY)**
-Write character
-#### **Client.world.writeCharXY(char, color, charX, charY)**
-Move client to char XY
-#### **Client.world.writeCharXY2(char, color, charX, charY)**
-Write character to XY ensuring rate-limiting.
-#### **Client.world.writeString(str, color, startTileX, startTileY, startCharX, startCharY)**
-Write string
-#### **Client.world.writeStringXY(str, color, charX, charY)**
-Write string to XY
-#### **Client.world.writeStringXY2(str, color, charX, charY)**
-Write string to XY ensuring rate-limiting.
-#### **Client.world.protectTile(type, tileX, tileY)**
+#### **array Client.world.getTile(int tileX, int tileY)**
+Request the content of a tile.
+#### **object Client.world.getChar(int tileX, int tileY, int charX, int charY)**
+Retrieves the character. Returns { char: ' ', color: 0 }
+#### **Promise Client.world.requestRectangle(int minX, int minY, int maxX, int maxY)**
+Request content within a specified rectangular region.
+#### **bool Client.world.move(int tileX, int tileY, int charX, int charY)**
+Update the cursor position and move the player accordingly.
+#### **bool Client.world.writeChar(string char = ' ', color, int tileX, int tileY, int charX, int charY)**
+Write a character.
+#### **bool Client.world.writeString(string str = ' ', int color, int startTileX, int startTileY, int startCharX, int startCharY)**
+Write a string.
+#### **bool Client.world.protectTile(string type, int tileX, int tileY)**
 Protect tile. You need to be an owner to use this
+#### **object Client.world.createEditItem(string char = ' ', int tileX, int tileY, int charX, int charY, string data = '')**
+Create edit item
+
 #### **Client.world.leave()**
 Leave world
-#### **Client.world.userCount**
+#### **int Client.world.userCount**
 Users in world
 
 ### Client.util
-#### **Client.util.rgbToInt(r, g, b)**
+#### **array Client.util.chunkifyString(string message, int quota)**
+Chunkify string ensuring the quota
+#### **int Client.util.rgbToInt(int r, int g, int b)**
 Convert rgb to int
-#### **Client.util.convertXY(x, y)**
+#### **Array Client.util.convertXY(int x, int y)**
 Convert char XY to position
-#### **Client.util.getCursorPosition()**
+#### **Array Client.util.getCursorPosition()**
 Get current cursor position. Browser only
 
 ### TileSystem
-#### **TileSystem.wrapStringTo16x16(inputString)**
-Wrap string to 16x16 grid
-#### **TileSystem.getChar(x, y, chunk)**
-Get char at XY in specified tile data
-#### **TileSystem.getTile(tileX, tileY)**
-Get tile data
+#### **array Client.world.wrapStringTo16x16(string inputString, Array color)**
+Wraps a given input string into a 16x16 grid represented as a 2D array.
+#### **object TileSystem.getChar(int x, int y, array chunk)**
+Gets the character. Returns { char: ' ', color: 0 }
+#### **array TileSystem.getTile(int tileX, int tileY)**
+Retrieves the tile.
+#### **TileSystem.saveTile(tileX, tileY)**
+Saves a tile with the given key and content.
 #### TileSystem.tiles
-Object of every loaded tile
+Object of every fetched tile.
