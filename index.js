@@ -266,8 +266,9 @@ class Client extends EventEmitter {
 			 * Sends buffered write requests in chunks.
 			 */
 			flushWrites() {
-				while (this.net.writeBuffer.length > 0 && this.player.quota.canSpend(1)) {
-					const edits = this.net.writeBuffer.splice(0, this.net.writeSize);
+				while (this.net.writeBuffer.length > 0 && this.player.quota.canSpend(Math.min(this.net.writeBuffer.length, 512))) {
+					console.log(this.player.quota.allowance);
+					const edits = this.net.writeBuffer.splice(0, Math.floor(this.player.quota.allowance));
 					this.net.sendWrite(edits);
 				}
 			},
@@ -284,14 +285,15 @@ class Client extends EventEmitter {
 			 */
 			setFlushInterval(newInterval) {
 				clearInterval(this.net.writeInterval);
-				this.net.writeInterval = setInterval(() => {
-					this.net.flushWrites();
+				this.writeInterval = setInterval(() => {
+					this.flushWrites();
 				}, newInterval);
 			},
 			sequence: 1
 		}
 
 		this.net.flushWrites = this.net.flushWrites.bind(this);
+		this.net.setFlushInterval = this.net.setFlushInterval.bind(this);
 
 		this.net.ws.onopen = () => {
 			this.util.log(`WebSocket connected!`);
