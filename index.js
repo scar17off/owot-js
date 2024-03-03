@@ -395,29 +395,27 @@ class Client extends EventEmitter {
 			 *                                                                            If the WebSocket connection is not open, returns false.
 			 *                                                                            Otherwise, returns a Promise that resolves with the fetched tile content.
 			 */
-			getTile: (tileX, tileY) => {
+			getTile: async (tileX, tileY) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
-				const existingTile = Tiles.getTile(tileX, tileY);
+				let existingTile = Tiles.getTile(tileX, tileY);
 				if (existingTile) return existingTile;
 
-				return new Promise((resolve, reject) => {
-					this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
+				this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
 
-					const fn = (...args) => {
-						const updates = args[0];
-
-						for (const update in updates) {
-							const [tileUpdateY, tileUpdateX] = update.split(",").map(coord => parseInt(coord)); // first coord in key name is Y somewhy
-							if (tileUpdateX !== tileX || tileUpdateY !== tileY) continue;
-							this.off("fetch", fn);
-							const content = updates[update].content;
-							const color = updates[update].color; // Extract color information
+				await new Promise((resolve) => {
+					const fetchHandler = (updates) => {
+						const updateKey = `${tileY},${tileX}`;
+						if (updates.hasOwnProperty(updateKey)) {
+							const { content, color } = updates[updateKey];
 							Tiles.saveTile(`${tileX},${tileY}`, content, color);
-							resolve(Tiles.getTile(tileX, tileY));
+							resolve();
 						}
-					}
-					this.on("fetch", fn);
+					};
+					this.once("fetch", fetchHandler);
 				});
+
+				existingTile = Tiles.getTile(tileX, tileY);
+				return existingTile;
 			},
 			/**
 			* Retrieves the character at the specified coordinates (tileX, tileY, charX, charY) from the world.
