@@ -6,12 +6,12 @@ REQUIRES NODE.JS 12.0+!
 ![Nodejs](https://img.shields.io/badge/-Node.js%2012.0%2B-brightgreen?style=for-the-badge&logo=node.js&labelColor=1a1a1a)
 # Example
 ```js
-const OWOTjs = require('owot-js');
+const OWOTjs = require("owot-js");
 
 var bot = new OWOTjs.Client();
 
 bot.on("join", () => {
-    bot.chat.send('Hello World!');
+    bot.chat.send("Hello World!");
 });
 ```
 # Events
