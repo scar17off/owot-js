@@ -266,10 +266,6 @@ class Client extends EventEmitter {
 			 * Sends buffered write requests in chunks.
 			 */
 			flushWrites() {
-				if (!this.player || !this.player.quota) {
-					console.error("Player or player quota is not initialized.");
-					return;
-				}
 				while (this.net.writeBuffer.length > 0 && this.player.quota.canSpend(1)) {
 					const edits = this.net.writeBuffer.splice(0, this.net.writeSize);
 					this.net.sendWrite(edits);
