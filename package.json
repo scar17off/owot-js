@@ -1,7 +1,7 @@
 {
 	"name": "owot-js",
 	"version": "1.0.17",
-	"description": "OWOT Client. Tile management, chat and chat support",
+	"description": "OWOT Client. Tile management, chat and world editing capabilities.",
 	"main": "index.js",
 	"keywords": [
 		"owot-js",
