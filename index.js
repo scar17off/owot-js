@@ -16,7 +16,7 @@ class CharQuota {
 		*                            If true, the allowance is not limited and remains constant.
 		*                            If false, the allowance is updated based on the rate and time.
 		* @constructor
-	*/
+	 */
 	constructor(rate, time, infinite) {
 		this.lastCheck = Date.now();
 		this.allowance = rate;
@@ -25,9 +25,9 @@ class CharQuota {
 		this.infinite = infinite;
 	}
 	/**
-			* Updates the allowance based on the elapsed time since the last check.
-			* Adjusts the allowance according to the rate and time constraints.
-	   */
+		* Updates the allowance based on the elapsed time since the last check.
+		* Adjusts the allowance according to the rate and time constraints.
+	 */
 	update() {
 		const currentTime = Date.now();
 		this.allowance += (currentTime - this.lastCheck) * (this.rate / this.time);
@@ -63,7 +63,7 @@ class CharQuota {
 		* If the allowance is already equal to or greater than the rate, returns 0.
 		*
 		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
-	*/
+	 */
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
@@ -73,7 +73,7 @@ class CharQuota {
 		* It uses the getTimeToRestore method to determine the wait time.
 		*
 		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
-	*/
+	 */
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
 		await new Promise(resolve => setTimeout(resolve, restoreTime));
@@ -100,7 +100,7 @@ class TileSystem {
 	wrapStringTo16x16(inputString, color) {
 		const result = [];
 		let index = 0;
-		if(!color) color = new Array(inputString.length).fill(0);
+		if (!color) color = new Array(inputString.length).fill(0);
 
 		for (let x = 0; x < 16; x++) {
 			result[x] = [];
@@ -155,6 +155,7 @@ class TileSystem {
 const Tiles = new TileSystem();
 
 /**
+ * Class representing a client.
  * @extends EventEmitter
  */
 class Client extends EventEmitter {
@@ -242,7 +243,7 @@ class Client extends EventEmitter {
 			 */
 			sendWrite: (edits) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
-				if(!this.player.quota.canSpend(1)) return false;
+				if (!this.player.quota.canSpend(1)) return false;
 
 				const writeReq = {
 					kind: "write",
@@ -307,15 +308,15 @@ class Client extends EventEmitter {
 			if (data.kind == "chat") this.emit("chat", data);
 			if (data.kind == "tileUpdate" || data.kind == "fetch") {
 				this.emit("tileUpdate", data.tiles);
-			
+
 				for (const update in data.tiles) {
 					if (!data.tiles[update]) return;
 					const content = data.tiles[update].content;
 					const color = data.tiles[update].properties.color;
-			
+
 					Tiles.saveTile(update, content, color);
 				}
-			
+
 				if (data.kind == "fetch") this.emit("fetch", data.tiles);
 			}
 			if (data.kind == "user_count") this.world.userCount = data.count;
@@ -400,7 +401,7 @@ class Client extends EventEmitter {
 			* @param {number} charX - The x-coordinate of the character within the tile.
 			* @param {number} charY - The y-coordinate of the character within the tile.
 			* @returns {Promise<string>} - A promise that resolves to the character at the specified coordinates.
-			*/
+			 */
 			getChar: async (tileX, tileY, charX, charY) => {
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
 					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
@@ -462,7 +463,7 @@ class Client extends EventEmitter {
 			 * @param {number} [charY=0] - The target y-coordinate of the character within the tile.
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
 			 */
-			move: (tileX = 0, tileY = 0, charX = undefined, charY = undefined) => {
+			move: (tileX = 0, tileY = 0, charX, charY) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
@@ -772,13 +773,14 @@ class Client extends EventEmitter {
 
 				msg = "[OWOT.js] " + msg;
 				if (isBrowser) console.log('%c ' + msg, "color: #00ff00");
-				else Chalk.green(msg);
+				else console.log(Chalk.green(msg));
 			}
 		}
 	}
 }
 
 if (isBrowser) window.OWOTjs = {
+	CharQuota,
 	Client: Client,
 	Tiles,
 	TileSystem
@@ -793,21 +795,21 @@ else {
 		 * The Client class for managing WebSocket connections.
 		 * @type {Client}
 		 */
-		Client: Client,
+		Client,
 		/**
 		 * The CharQuota class for managing character rate limitations.
 		 * @type {CharQuota}
 		 */
-		CharQuota: CharQuota,
+		CharQuota,
 		/**
 		 * The Tiles class for handling tiles and characters.
 		 * @type {Tiles}
 		 */
-		Tiles: Tiles,
+		Tiles,
 		/**
 		 * The TileSystem class for managing tiles and their properties.
 		 * @type {TileSystem}
 		 */
-		TileSystem: TileSystem
+		TileSystem
 	}
 }
