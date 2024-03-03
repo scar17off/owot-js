@@ -1,7 +1,6 @@
 let isBrowser = typeof window !== "undefined";
 
 if (isBrowser) {
-	!function (e) { "use strict"; function t() { } function n(e, t) { for (var n = e.length; n--;)if (e[n].listener === t) return n; return -1 } function r(e) { return function () { return this[e].apply(this, arguments) } } function i(e) { return "function" == typeof e || e instanceof RegExp || !(!e || "object" != typeof e) && i(e.listener) } var s = t.prototype, o = e.EventEmitter; s.getListeners = function (e) { var t, n, r = this._getEvents(); if (e instanceof RegExp) { t = {}; for (n in r) r.hasOwnProperty(n) && e.test(n) && (t[n] = r[n]) } else t = r[e] || (r[e] = []); return t }, s.flattenListeners = function (e) { var t, n = []; for (t = 0; t < e.length; t += 1)n.push(e[t].listener); return n }, s.getListenersAsObject = function (e) { var t, n = this.getListeners(e); return n instanceof Array && (t = {}, t[e] = n), t || n }, s.addListener = function (e, t) { if (!i(t)) throw new TypeError("listener must be a function"); var r, s = this.getListenersAsObject(e), o = "object" == typeof t; for (r in s) s.hasOwnProperty(r) && -1 === n(s[r], t) && s[r].push(o ? t : { listener: t, once: !1 }); return this }, s.on = r("addListener"), s.addOnceListener = function (e, t) { return this.addListener(e, { listener: t, once: !0 }) }, s.once = r("addOnceListener"), s.defineEvent = function (e) { return this.getListeners(e), this }, s.defineEvents = function (e) { for (var t = 0; t < e.length; t += 1)this.defineEvent(e[t]); return this }, s.removeListener = function (e, t) { var r, i, s = this.getListenersAsObject(e); for (i in s) s.hasOwnProperty(i) && -1 !== (r = n(s[i], t)) && s[i].splice(r, 1); return this }, s.off = r("removeListener"), s.addListeners = function (e, t) { return this.manipulateListeners(!1, e, t) }, s.removeListeners = function (e, t) { return this.manipulateListeners(!0, e, t) }, s.manipulateListeners = function (e, t, n) { var r, i, s = e ? this.removeListener : this.addListener, o = e ? this.removeListeners : this.addListeners; if ("object" != typeof t || t instanceof RegExp) for (r = n.length; r--;)s.call(this, t, n[r]); else for (r in t) t.hasOwnProperty(r) && (i = t[r]) && ("function" == typeof i ? s.call(this, r, i) : o.call(this, r, i)); return this }, s.removeEvent = function (e) { var t, n = typeof e, r = this._getEvents(); if ("string" === n) delete r[e]; else if (e instanceof RegExp) for (t in r) r.hasOwnProperty(t) && e.test(t) && delete r[t]; else delete this._events; return this }, s.removeAllListeners = r("removeEvent"), s.emitEvent = function (e, t) { var n, r, i, s, o = this.getListenersAsObject(e); for (s in o) if (o.hasOwnProperty(s)) for (n = o[s].slice(0), i = 0; i < n.length; i++)r = n[i], !0 === r.once && this.removeListener(e, r.listener), r.listener.apply(this, t || []) === this._getOnceReturnValue() && this.removeListener(e, r.listener); return this }, s.trigger = r("emitEvent"), s.emit = function (e) { var t = Array.prototype.slice.call(arguments, 1); return this.emitEvent(e, t) }, s.setOnceReturnValue = function (e) { return this._onceReturnValue = e, this }, s._getOnceReturnValue = function () { return !this.hasOwnProperty("_onceReturnValue") || this._onceReturnValue }, s._getEvents = function () { return this._events || (this._events = {}) }, t.noConflict = function () { return e.EventEmitter = o, t }, "function" == typeof define && define.amd ? define(function () { return t }) : "object" == typeof module && module.exports ? module.exports = t : e.EventEmitter = t }("undefined" != typeof window ? window : this || {});
 } else {
 	EventEmitter = require("events");
 	WebSocket = require("ws");
@@ -10,12 +9,12 @@ if (isBrowser) {
 
 class CharQuota {
 	/**
-		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
-		* @param {number} time - The time unit in milliseconds over which the rate is applied.
-		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
-		*                            If true, the allowance is not limited and remains constant.
-		*                            If false, the allowance is updated based on the rate and time.
-		* @constructor
+	 * @param {number} rate - The rate at which the allowance is replenished per unit of time.
+	 * @param {number} time - The time unit in milliseconds over which the rate is applied.
+	 * @param {boolean} infinite - Indicates whether the allowance is infinite or not.
+	 *                            If true, the allowance is not limited and remains constant.
+	 *                            If false, the allowance is updated based on the rate and time.
+	 * @constructor
 	 */
 	constructor(rate, time, infinite) {
 		this.lastCheck = Date.now();
@@ -25,8 +24,8 @@ class CharQuota {
 		this.infinite = infinite;
 	}
 	/**
-		* Updates the allowance based on the elapsed time since the last check.
-		* Adjusts the allowance according to the rate and time constraints.
+	 * Updates the allowance based on the elapsed time since the last check.
+	 * Adjusts the allowance according to the rate and time constraints.
 	 */
 	update() {
 		const currentTime = Date.now();
@@ -37,12 +36,12 @@ class CharQuota {
 		}
 	}
 	/**
-		* Checks if the specified count can be spent based on the allowance.
-		* If the allowance is infinite, it always returns true.
-		* Otherwise, it updates the allowance and checks if it's sufficient.
-		*
-		* @param {number} count - The count to be spent.
-		* @returns {boolean} - Returns true if the count can be spent, false otherwise.
+	 * Checks if the specified count can be spent based on the allowance.
+	 * If the allowance is infinite, it always returns true.
+	 * Otherwise, it updates the allowance and checks if it's sufficient.
+	 *
+	 * @param {number} count - The count to be spent.
+	 * @returns {boolean} - Returns true if the count can be spent, false otherwise.
 	 */
 	canSpend(count) {
 		if (this.infinite) {
@@ -59,20 +58,20 @@ class CharQuota {
 		return true;
 	}
 	/**
-		* Calculates the time remaining until the allowance is fully restored to the specified rate.
-		* If the allowance is already equal to or greater than the rate, returns 0.
-		*
-		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
+	 * Calculates the time remaining until the allowance is fully restored to the specified rate.
+	 * If the allowance is already equal to or greater than the rate, returns 0.
+	 *
+	 * @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
 	 */
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
 	}
 	/**
-		* Waits asynchronously until the allowance is fully restored to the specified rate.
-		* It uses the getTimeToRestore method to determine the wait time.
-		*
-		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
+	 * Waits asynchronously until the allowance is fully restored to the specified rate.
+	 * It uses the getTimeToRestore method to determine the wait time.
+	 *
+	 * @returns {Promise<void>} - Resolves once the allowance is fully restored.
 	 */
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
@@ -197,7 +196,7 @@ class Client extends EventEmitter {
 			tileX: 0,
 			tileY: 0,
 			charX: 0,
-			tileY: 0,
+			charY: 0,
 			setPosition: (tileX, tileY, charX, charY) => {
 				this.player.tileX = tileX;
 				this.player.tileY = tileY;
@@ -331,7 +330,11 @@ class Client extends EventEmitter {
 			this.util.log("WebSocket disconnected!");
 			this.emit("close");
 		}
-
+		/**
+		 * Manages chat functionalities, allowing messages to be sent through the WebSocket connection.
+		 * @type {Object}
+		 * @property {Function} send - Sends a chat message through the WebSocket connection.
+		 */
 		this.chat = {
 			/**
 			 * Sends a chat message through the WebSocket connection.
@@ -353,8 +356,29 @@ class Client extends EventEmitter {
 				return true;
 			}
 		}
+		/**
+		 * Represents the world context for the client, including user interactions, tile management, and world navigation.
+		 * @type {Object}
+		 * @property {number} userCount - The current number of users in the world.
+		 * @property {Function} leave - Method to leave the current world, closing the WebSocket connection.
+		 * @property {Function} getTile - Method to request the content of a specific tile by its coordinates.
+		 * @property {Function} requestRectangle - Method to request content within a specified rectangular region.
+		 * @property {Function} move - Method to update the cursor position and move the player accordingly.
+		 * @property {Function} writeChar - Method to write a single character at specified coordinates.
+		 * @property {Function} writeString - Method to write a string starting from specified coordinates.
+		 * @property {Function} createEditItem - Method to create an edit item for tile content modification.
+		 * @property {Function} createLinkCoordinates - Method to create a link at specified coordinates.
+		 * This object manages interactions within the world, including moving, writing, and fetching tile content.
+		 */
 		this.world = {
+			/**
+			 * The current number of users in the world.
+			 * @type {number}
+			 */
 			userCount: 0,
+			/**
+			 * Leaves the current world by closing the WebSocket connection and emitting a close event.
+			 */
 			leave: () => {
 				this.net.ws.close();
 				this.emit("close");
@@ -725,12 +749,12 @@ class Client extends EventEmitter {
 				return b | g << 8 | r << 16;
 			},
 			/**
-			* Converts screen coordinates to tile and character coordinates.
-			*
-			* @param {number} x - The x-coordinate on the screen.
-			* @param {number} y - The y-coordinate on the screen.
-			* @returns {Array.<number>} - An array containing [tileX, tileY, charY, charX].
-			*/
+			 * Converts screen coordinates to tile and character coordinates.
+			 *
+			 * @param {number} x - The x-coordinate on the screen.
+			 * @param {number} y - The y-coordinate on the screen.
+			 * @returns {Array.<number>} - An array containing [tileX, tileY, charY, charX].
+			 */
 			convertXY: (x, y) => {
 				let tileX = Math.floor(x / 16);
 				let tileY = Math.floor(y / 8);
