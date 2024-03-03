@@ -216,7 +216,7 @@ class Client extends EventEmitter {
 
 		const parameters = [{
 			headers: {
-				Cookie: typeof options.token == "undefined" ? '' : "csrftoken=" + options.token
+				Cookie: typeof options.token == "undefined" ? '' : "token=" + options.token
 			}
 		}];
 
