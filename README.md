@@ -48,6 +48,20 @@ bot.on("join", () => {
 - `charY`
 - `quota`
 
+### Client.net
+#### **WebSocket Client.net.ws**
+WebSocket connection.
+#### **Client.net.sendWrite(array edits)**
+Send writes request.
+#### **array Client.net.writeBuffer**
+Buffer for writes.
+#### **int Client.net.writeSize**
+Size of string chunks when sending writes.
+#### **Client.net.flushWrites()**
+Forced writes flushing.
+#### **Client.net.setFlushInterval(int newInterval)**
+Set the interval for flushing writes at specified interval in milliseconds.
+
 ### Client.chat
 #### **Client.chat.send(msg, global = false)**
 Sends a chat message.
@@ -66,30 +80,30 @@ Write a character.
 #### **bool Client.world.writeString(string str = ' ', int color, int startTileX, int startTileY, int startCharX, int startCharY)**
 Write a string.
 #### **bool Client.world.protectTile(string type, int tileX, int tileY)**
-Protect tile. You need to be an owner to use this
+Protect tile. You need to be an owner to use this.
 #### **object Client.world.createEditItem(string char = ' ', int tileX, int tileY, int charX, int charY, string data = '')**
-Create edit item
+Create edit item.
 
 #### **Client.world.leave()**
-Leave world
+Leave world.
 #### **int Client.world.userCount**
-Users in world
+Users in world.
 
 ### Client.util
 #### **array Client.util.chunkifyString(string message, int quota)**
-Chunkify string ensuring the quota
+Chunkify string ensuring the quota.
 #### **int Client.util.rgbToInt(int r, int g, int b)**
-Convert rgb to int
+Convert rgb to int.
 #### **Array Client.util.convertXY(int x, int y)**
-Convert char XY to position
+Convert char XY to position.
 #### **Array Client.util.getCursorPosition()**
-Get current cursor position. Browser only
+Get current cursor position. Browser only.
 
 ### TileSystem
 #### **array Client.world.wrapStringTo16x16(string inputString, Array color)**
 Wraps a given input string into a 16x16 grid represented as a 2D array.
 #### **object TileSystem.getChar(int x, int y, array chunk)**
-Gets the character. Returns { char: ' ', color: 0 }
+Gets the character. Returns: { char: ' ', color: 0 }
 #### **array TileSystem.getTile(int tileX, int tileY)**
 Retrieves the tile.
 #### **TileSystem.saveTile(tileX, tileY)**
