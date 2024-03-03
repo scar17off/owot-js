@@ -222,8 +222,24 @@ class Client extends EventEmitter {
 
 		if (isBrowser) parameters.unshift(null);
 
+		/**
+		 * Network configuration and methods for WebSocket communication.
+		 * @type {Object}
+		 * @property {WebSocket} ws - The WebSocket connection.
+		 * @property {Function} sendWrite - Sends write requests through the WebSocket.
+		 * @property {Array} writeBuffer - Buffer for storing write requests before sending.
+		 * @property {number} writeSize - Maximum number of edits to send per request.
+		 * @property {Function} flushWrites - Sends buffered write requests in chunks.
+		 * @property {number} writeInterval - Interval for flushing write requests.
+		 * @property {number} sequence - Sequence number for write requests.
+		 */
 		this.net = {
 			ws: new WebSocket(this.options.ws, ...parameters),
+			/**
+			 * Sends write requests through the WebSocket.
+			 * @param {Array} edits - The edits to be sent.
+			 * @returns {boolean} - Returns false if unable to send.
+			 */
 			sendWrite: (edits) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 				if(!this.player.quota.canSpend(1)) return false;
@@ -234,9 +250,51 @@ class Client extends EventEmitter {
 				}
 
 				this.net.ws.send(JSON.stringify(writeReq));
-			}
+			},
+			/**
+			 * Buffer for storing write requests before sending.
+			 * @type {Array}
+			 */
+			writeBuffer: [],
+			/**
+			 * Maximum number of edits to send per request.
+			 * @type {number}
+			 */
+			writeSize: 512,
+			/**
+			 * Sends buffered write requests in chunks.
+			 */
+			flushWrites() {
+				if (!this.player || !this.player.quota) {
+					console.error("Player or player quota is not initialized.");
+					return;
+				}
+				while (this.net.writeBuffer.length > 0 && this.player.quota.canSpend(1)) {
+					const edits = this.net.writeBuffer.splice(0, this.net.writeSize);
+					this.net.sendWrite(edits);
+				}
+			},
+			/**
+			 * Interval for flushing write requests based on player quota time.
+			 */
+			writeInterval: setInterval(() => {
+				this.net.flushWrites();
+			}, this.player.quota.time),
+			/**
+			 * Updates the writeInterval rate for flushing write requests.
+			 * @param {number} newInterval - The new interval in milliseconds.
+			 * @returns {void}
+			 */
+			setFlushInterval(newInterval) {
+				clearInterval(this.net.writeInterval);
+				this.net.writeInterval = setInterval(() => {
+					this.net.flushWrites();
+				}, newInterval);
+			},
+			sequence: 1
 		}
-		this.net.ws.sequence = 1;
+
+		this.net.flushWrites = this.net.flushWrites.bind(this);
 
 		this.net.ws.onopen = () => {
 			this.util.log(`WebSocket connected!`);
@@ -272,15 +330,6 @@ class Client extends EventEmitter {
 			this.util.log("WebSocket disconnected!");
 			this.emit("close");
 		}
-		
-		this.writeBuffer = [];
-		this.writeInterval = setInterval(() => {
-			while (this.writeBuffer.length > 0 && this.player.quota.canSpend(1)) {
-				if(!this.writeBuffer.length) return;
-				const edits = this.writeBuffer.splice(0, Math.min(512, this.writeBuffer.length));
-				this.net.sendWrite(edits);
-			}
-		}, this.player.quota.time);
 
 		this.chat = {
 			/**
@@ -459,7 +508,7 @@ class Client extends EventEmitter {
 				if (Tiles.getChar(charX, charY, this.world.getTile(tileX, tileY)) == char) return false;
 
 				const editItem = this.world.createEditItem(char, color, tileX, tileY, charX, charY);
-				this.writeBuffer.push(editItem);
+				this.net.writeBuffer.push(editItem);
 
 				return true;
 			},
@@ -502,7 +551,7 @@ class Client extends EventEmitter {
 							const [newTileX, newTileY, newCharX, newCharY] = this.util.convertXY(x, y);
 
 							const editItem = this.world.createEditItem(char, this.player.color, newTileX + tileOffsetX, newTileY, newCharX, newCharY);
-							this.writeBuffer.push(editItem);
+							this.net.writeBuffer.push(editItem);
 
 							offsetX++;
 							if (offsetX >= 16) {
@@ -742,22 +791,22 @@ else {
 	module.exports = {
 		/**
 		 * The Client class for managing WebSocket connections.
-		 * @type {Class}
+		 * @type {Client}
 		 */
 		Client: Client,
 		/**
 		 * The CharQuota class for managing character rate limitations.
-		 * @type {Class}
+		 * @type {CharQuota}
 		 */
 		CharQuota: CharQuota,
 		/**
 		 * The Tiles class for handling tiles and characters.
-		 * @type {Class}
+		 * @type {Tiles}
 		 */
 		Tiles: Tiles,
 		/**
 		 * The TileSystem class for managing tiles and their properties.
-		 * @type {Class}
+		 * @type {TileSystem}
 		 */
 		TileSystem: TileSystem
 	}
