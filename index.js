@@ -436,24 +436,23 @@ class Client extends EventEmitter {
 				return Tiles.getChar(charX, charY, tile);
 			},
 			/**
+			 * Don't even know if this shit is working
+			 * 
 			 * Retrieves a string from the world starting from the specified coordinates.
 			 * @param {number} x1 - The x-coordinate of the first character.
 			 * @param {number} y1 - The y-coordinate of the first character.
 			 * @param {number} len - The length of the string.
 			 * @returns {Promise<string>} - A promise that resolves to the string starting from the specified coordinates.
 			 */
-			getString: async (x1, y1, len) => {
+			getString: async (x1, y, len) => {
 				let result = '';
-				let [tileX, tileY, charX, charY] = this.util.convertXY(x1, y1);
+				let [tileX, tileY, charX, charY] = this.util.convertXY(x1, y);
 				let remainingLength = len;
 
 				while (remainingLength > 0) {
-					const tile = await this.world.getTile(tileX, tileY);
-					if (!tile) break;
-
 					for (let i = charX; i < 16 && remainingLength > 0; i++) {
-						const charInfo = Tiles.getChar(i, charY, tile);
-						if (charInfo) {
+						const charInfo = await this.world.getChar(tileX, tileY, i, charY);
+						if (charInfo && charInfo.char) {
 							result += charInfo.char;
 							remainingLength--;
 						} else {

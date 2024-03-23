@@ -77,6 +77,8 @@ Request content within a specified rectangular region.
 Update the cursor position and move the player accordingly.
 #### **bool Client.world.writeChar(string char = ' ', color, int tileX, int tileY, int charX, int charY)**
 Write a character.
+#### **string Client.world.getString(int x, int y, int len)**
+Get string from x, y to x+len, y.
 #### **bool Client.world.writeString(string str = ' ', int color, int startTileX, int startTileY, int startCharX, int startCharY)**
 Write a string.
 #### **bool Client.world.protectTile(string type, int tileX, int tileY)**
