@@ -436,6 +436,38 @@ class Client extends EventEmitter {
 				return Tiles.getChar(charX, charY, tile);
 			},
 			/**
+			 * Retrieves a string from the world starting from the specified coordinates.
+			 * @param {number} x1 - The x-coordinate of the first character.
+			 * @param {number} y1 - The y-coordinate of the first character.
+			 * @param {number} len - The length of the string.
+			 * @returns {Promise<string>} - A promise that resolves to the string starting from the specified coordinates.
+			 */
+			getString: async (x1, y1, len) => {
+				let result = '';
+				let [tileX, tileY, charX, charY] = this.util.convertXY(x1, y1);
+				let remainingLength = len;
+
+				while (remainingLength > 0) {
+					const tile = await this.world.getTile(tileX, tileY);
+					if (!tile) break;
+
+					for (let i = charX; i < 16 && remainingLength > 0; i++) {
+						const charInfo = Tiles.getChar(i, charY, tile);
+						if (charInfo) {
+							result += charInfo.char;
+							remainingLength--;
+						} else {
+							break;
+						}
+					}
+
+					tileX++;
+					charX = 0;
+				}
+
+				return result;
+			},
+			/**
 			 * Request content within a specified rectangular region and returns a Promise that resolves with the fetched chunks.
 			 *
 			 * @param {number} minX - The minimum x-coordinate of the rectangular region.
