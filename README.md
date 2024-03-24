@@ -21,6 +21,7 @@ bot.on("join", () => {
 `tileUpdate` - New tile updates [updates]  
 `fetch` - New fetched tiles [tile]  
 `join` - Joined and got id [id, channel]
+`chathistory` - Got chat history [global, page]
 # Options
 `origin` - origin (default: `https://ourworldoftext.com/`)  
 `ws` - ws url (default: `wss://ourworldoftext.com/ws/`)  
