@@ -10,13 +10,13 @@ if (isBrowser) {
 
 class CharQuota {
 	/**
-	 * @param {number} rate - The rate at which the allowance is replenished per unit of time.
-	 * @param {number} time - The time unit in milliseconds over which the rate is applied.
-	 * @param {boolean} infinite - Indicates whether the allowance is infinite or not.
-	 *                            If true, the allowance is not limited and remains constant.
-	 *                            If false, the allowance is updated based on the rate and time.
-	 * @constructor
-	 */
+		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
+		* @param {number} time - The time unit in milliseconds over which the rate is applied.
+		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
+		*                            If true, the allowance is not limited and remains constant.
+		*                            If false, the allowance is updated based on the rate and time.
+		* @constructor
+	*/
 	constructor(rate, time, infinite) {
 		this.lastCheck = Date.now();
 		this.allowance = rate;
@@ -25,9 +25,9 @@ class CharQuota {
 		this.infinite = infinite;
 	}
 	/**
-	 * Updates the allowance based on the elapsed time since the last check.
-	 * Adjusts the allowance according to the rate and time constraints.
-	 */
+			* Updates the allowance based on the elapsed time since the last check.
+			* Adjusts the allowance according to the rate and time constraints.
+	   */
 	update() {
 		const currentTime = Date.now();
 		this.allowance += (currentTime - this.lastCheck) * (this.rate / this.time);
@@ -37,12 +37,12 @@ class CharQuota {
 		}
 	}
 	/**
-	 * Checks if the specified count can be spent based on the allowance.
-	 * If the allowance is infinite, it always returns true.
-	 * Otherwise, it updates the allowance and checks if it's sufficient.
-	 *
-	 * @param {number} count - The count to be spent.
-	 * @returns {boolean} - Returns true if the count can be spent, false otherwise.
+		* Checks if the specified count can be spent based on the allowance.
+		* If the allowance is infinite, it always returns true.
+		* Otherwise, it updates the allowance and checks if it's sufficient.
+		*
+		* @param {number} count - The count to be spent.
+		* @returns {boolean} - Returns true if the count can be spent, false otherwise.
 	 */
 	canSpend(count) {
 		if (this.infinite) {
@@ -59,21 +59,21 @@ class CharQuota {
 		return true;
 	}
 	/**
-	 * Calculates the time remaining until the allowance is fully restored to the specified rate.
-	 * If the allowance is already equal to or greater than the rate, returns 0.
-	 *
-	 * @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
-	 */
+		* Calculates the time remaining until the allowance is fully restored to the specified rate.
+		* If the allowance is already equal to or greater than the rate, returns 0.
+		*
+		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
+	*/
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
 	}
 	/**
-	 * Waits asynchronously until the allowance is fully restored to the specified rate.
-	 * It uses the getTimeToRestore method to determine the wait time.
-	 *
-	 * @returns {Promise<void>} - Resolves once the allowance is fully restored.
-	 */
+		* Waits asynchronously until the allowance is fully restored to the specified rate.
+		* It uses the getTimeToRestore method to determine the wait time.
+		*
+		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
+	*/
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
 		await new Promise(resolve => setTimeout(resolve, restoreTime));
@@ -100,7 +100,7 @@ class TileSystem {
 	wrapStringTo16x16(inputString, color) {
 		const result = [];
 		let index = 0;
-		if (!color) color = new Array(inputString.length).fill(0);
+		if(!color) color = new Array(inputString.length).fill(0);
 
 		for (let x = 0; x < 16; x++) {
 			result[x] = [];
@@ -155,7 +155,6 @@ class TileSystem {
 const Tiles = new TileSystem();
 
 /**
- * Class representing a client.
  * @extends EventEmitter
  */
 class Client extends EventEmitter {
@@ -197,7 +196,7 @@ class Client extends EventEmitter {
 			tileX: 0,
 			tileY: 0,
 			charX: 0,
-			charY: 0,
+			tileY: 0,
 			setPosition: (tileX, tileY, charX, charY) => {
 				this.player.tileX = tileX;
 				this.player.tileY = tileY;
@@ -243,7 +242,7 @@ class Client extends EventEmitter {
 			 */
 			sendWrite: (edits) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
-				if (!this.player.quota.canSpend(1)) return false;
+				if(!this.player.quota.canSpend(1)) return false;
 
 				const writeReq = {
 					kind: "write",
@@ -266,9 +265,12 @@ class Client extends EventEmitter {
 			 * Sends buffered write requests in chunks.
 			 */
 			flushWrites() {
-				while (this.net.writeBuffer.length > 0 && this.player.quota.canSpend(Math.min(this.net.writeBuffer.length, 512))) {
-					console.log(this.player.quota.allowance);
-					const edits = this.net.writeBuffer.splice(0, Math.floor(this.player.quota.allowance));
+				if (!this.player || !this.player.quota) {
+					console.error("Player or player quota is not initialized.");
+					return;
+				}
+				while (this.net.writeBuffer.length > 0 && this.player.quota.canSpend(1)) {
+					const edits = this.net.writeBuffer.splice(0, this.net.writeSize);
 					this.net.sendWrite(edits);
 				}
 			},
@@ -285,15 +287,14 @@ class Client extends EventEmitter {
 			 */
 			setFlushInterval(newInterval) {
 				clearInterval(this.net.writeInterval);
-				this.writeInterval = setInterval(() => {
-					this.flushWrites();
+				this.net.writeInterval = setInterval(() => {
+					this.net.flushWrites();
 				}, newInterval);
 			},
 			sequence: 1
 		}
 
 		this.net.flushWrites = this.net.flushWrites.bind(this);
-		this.net.setFlushInterval = this.net.setFlushInterval.bind(this);
 
 		this.net.ws.onopen = () => {
 			this.util.log(`WebSocket connected!`);
@@ -306,15 +307,15 @@ class Client extends EventEmitter {
 			if (data.kind == "chat") this.emit("chat", data);
 			if (data.kind == "tileUpdate" || data.kind == "fetch") {
 				this.emit("tileUpdate", data.tiles);
-
+			
 				for (const update in data.tiles) {
 					if (!data.tiles[update]) return;
 					const content = data.tiles[update].content;
 					const color = data.tiles[update].properties.color;
-
+			
 					Tiles.saveTile(update, content, color);
 				}
-
+			
 				if (data.kind == "fetch") this.emit("fetch", data.tiles);
 			}
 			if (data.kind == "user_count") this.world.userCount = data.count;
@@ -329,11 +330,7 @@ class Client extends EventEmitter {
 			this.util.log("WebSocket disconnected!");
 			this.emit("close");
 		}
-		/**
-		 * Manages chat functionalities, allowing messages to be sent through the WebSocket connection.
-		 * @type {Object}
-		 * @property {Function} send - Sends a chat message through the WebSocket connection.
-		 */
+
 		this.chat = {
 			/**
 			 * Sends a chat message through the WebSocket connection.
@@ -355,29 +352,8 @@ class Client extends EventEmitter {
 				return true;
 			}
 		}
-		/**
-		 * Represents the world context for the client, including user interactions, tile management, and world navigation.
-		 * @type {Object}
-		 * @property {number} userCount - The current number of users in the world.
-		 * @property {Function} leave - Method to leave the current world, closing the WebSocket connection.
-		 * @property {Function} getTile - Method to request the content of a specific tile by its coordinates.
-		 * @property {Function} requestRectangle - Method to request content within a specified rectangular region.
-		 * @property {Function} move - Method to update the cursor position and move the player accordingly.
-		 * @property {Function} writeChar - Method to write a single character at specified coordinates.
-		 * @property {Function} writeString - Method to write a string starting from specified coordinates.
-		 * @property {Function} createEditItem - Method to create an edit item for tile content modification.
-		 * @property {Function} createLinkCoordinates - Method to create a link at specified coordinates.
-		 * This object manages interactions within the world, including moving, writing, and fetching tile content.
-		 */
 		this.world = {
-			/**
-			 * The current number of users in the world.
-			 * @type {number}
-			 */
 			userCount: 0,
-			/**
-			 * Leaves the current world by closing the WebSocket connection and emitting a close event.
-			 */
 			leave: () => {
 				this.net.ws.close();
 				this.emit("close");
@@ -393,27 +369,29 @@ class Client extends EventEmitter {
 			 *                                                                            If the WebSocket connection is not open, returns false.
 			 *                                                                            Otherwise, returns a Promise that resolves with the fetched tile content.
 			 */
-			getTile: async (tileX, tileY) => {
+			getTile: (tileX, tileY) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
-				let existingTile = Tiles.getTile(tileX, tileY);
+				const existingTile = Tiles.getTile(tileX, tileY);
 				if (existingTile) return existingTile;
 
-				this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
+				return new Promise((resolve, reject) => {
+					this.net.ws.send(JSON.stringify({ fetchRectangles: [{ minX: tileX, minY: tileY, maxX: tileX, maxY: tileY }], kind: "fetch" }));
 
-				await new Promise((resolve) => {
-					const fetchHandler = (updates) => {
-						const updateKey = `${tileY},${tileX}`;
-						if (updates.hasOwnProperty(updateKey)) {
-							const { content, color } = updates[updateKey];
+					const fn = (...args) => {
+						const updates = args[0];
+
+						for (const update in updates) {
+							const [tileUpdateY, tileUpdateX] = update.split(",").map(coord => parseInt(coord)); // first coord in key name is Y somewhy
+							if (tileUpdateX !== tileX || tileUpdateY !== tileY) continue;
+							this.off("fetch", fn);
+							const content = updates[update].content;
+							const color = updates[update].color; // Extract color information
 							Tiles.saveTile(`${tileX},${tileY}`, content, color);
-							resolve();
+							resolve(Tiles.getTile(tileX, tileY));
 						}
-					};
-					this.once("fetch", fetchHandler);
+					}
+					this.on("fetch", fn);
 				});
-
-				existingTile = Tiles.getTile(tileX, tileY);
-				return existingTile;
 			},
 			/**
 			* Retrieves the character at the specified coordinates (tileX, tileY, charX, charY) from the world.
@@ -422,7 +400,7 @@ class Client extends EventEmitter {
 			* @param {number} charX - The x-coordinate of the character within the tile.
 			* @param {number} charY - The y-coordinate of the character within the tile.
 			* @returns {Promise<string>} - A promise that resolves to the character at the specified coordinates.
-			 */
+			*/
 			getChar: async (tileX, tileY, charX, charY) => {
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
 					[tileX, tileY, charX, charY] = this.util.convertXY(tileX, tileY);
@@ -434,37 +412,6 @@ class Client extends EventEmitter {
 				const tile = await this.world.getTile(tileX, tileY);
 
 				return Tiles.getChar(charX, charY, tile);
-			},
-			/**
-			 * Don't even know if this shit is working
-			 * 
-			 * Retrieves a string from the world starting from the specified coordinates.
-			 * @param {number} x1 - The x-coordinate of the first character.
-			 * @param {number} y1 - The y-coordinate of the first character.
-			 * @param {number} len - The length of the string.
-			 * @returns {Promise<string>} - A promise that resolves to the string starting from the specified coordinates.
-			 */
-			getString: async (x1, y, len) => {
-				let result = '';
-				let [tileX, tileY, charX, charY] = this.util.convertXY(x1, y);
-				let remainingLength = len;
-
-				while (remainingLength > 0) {
-					for (let i = charX; i < 16 && remainingLength > 0; i++) {
-						const charInfo = await this.world.getChar(tileX, tileY, i, charY);
-						if (charInfo && charInfo.char) {
-							result += charInfo.char;
-							remainingLength--;
-						} else {
-							break;
-						}
-					}
-
-					tileX++;
-					charX = 0;
-				}
-
-				return result;
 			},
 			/**
 			 * Request content within a specified rectangular region and returns a Promise that resolves with the fetched chunks.
@@ -515,7 +462,7 @@ class Client extends EventEmitter {
 			 * @param {number} [charY=0] - The target y-coordinate of the character within the tile.
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, and the message is sent successfully; otherwise, returns false.
 			 */
-			move: (tileX = 0, tileY = 0, charX, charY) => {
+			move: (tileX = 0, tileY = 0, charX = undefined, charY = undefined) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 
 				if (typeof charX === 'undefined' || typeof charY === 'undefined') {
@@ -777,12 +724,12 @@ class Client extends EventEmitter {
 				return b | g << 8 | r << 16;
 			},
 			/**
-			 * Converts screen coordinates to tile and character coordinates.
-			 *
-			 * @param {number} x - The x-coordinate on the screen.
-			 * @param {number} y - The y-coordinate on the screen.
-			 * @returns {Array.<number>} - An array containing [tileX, tileY, charY, charX].
-			 */
+			* Converts screen coordinates to tile and character coordinates.
+			*
+			* @param {number} x - The x-coordinate on the screen.
+			* @param {number} y - The y-coordinate on the screen.
+			* @returns {Array.<number>} - An array containing [tileX, tileY, charY, charX].
+			*/
 			convertXY: (x, y) => {
 				let tileX = Math.floor(x / 16);
 				let tileY = Math.floor(y / 8);
@@ -825,14 +772,13 @@ class Client extends EventEmitter {
 
 				msg = "[OWOT.js] " + msg;
 				if (isBrowser) console.log('%c ' + msg, "color: #00ff00");
-				else console.log(Chalk.green(msg));
+				else Chalk.green(msg);
 			}
 		}
 	}
 }
 
 if (isBrowser) window.OWOTjs = {
-	CharQuota,
 	Client: Client,
 	Tiles,
 	TileSystem
@@ -840,27 +786,22 @@ if (isBrowser) window.OWOTjs = {
 else {
 	/**
 	 * Module exports for the non-browser (Node.js/CommonJS) environment.
-	 * @module OWOTjs
 	 */
 	module.exports = {
 		/**
 		 * The Client class for managing WebSocket connections.
-		 * @type {Client}
 		 */
 		Client,
 		/**
 		 * The CharQuota class for managing character rate limitations.
-		 * @type {CharQuota}
 		 */
 		CharQuota,
 		/**
 		 * The Tiles class for handling tiles and characters.
-		 * @type {Tiles}
 		 */
 		Tiles,
 		/**
 		 * The TileSystem class for managing tiles and their properties.
-		 * @type {TileSystem}
 		 */
 		TileSystem
 	}
