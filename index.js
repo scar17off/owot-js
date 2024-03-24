@@ -304,6 +304,9 @@ class Client extends EventEmitter {
 		this.net.ws.onmessage = (msg) => {
 			let data = JSON.parse(msg.data);
 
+			if (data.kind == "chathistory") {
+				this.emit("chathistory", data.global_chat_prev, data.page_chat_prev);
+			}
 			if (data.kind == "chat") this.emit("chat", data);
 			if (data.kind == "tileUpdate" || data.kind == "fetch") {
 				this.emit("tileUpdate", data.tiles);
