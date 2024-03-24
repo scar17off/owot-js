@@ -353,7 +353,15 @@ class Client extends EventEmitter {
 			}
 		}
 		this.world = {
+			/**
+			 * The current number of users in the world.
+			 * @type {number}
+			 */
 			userCount: 0,
+			/**
+			 * Closes the WebSocket connection and emits a "close" event.
+			 * @returns {void}
+			 */
 			leave: () => {
 				this.net.ws.close();
 				this.emit("close");
