@@ -10,12 +10,12 @@ if (isBrowser) {
 
 class CharQuota {
 	/**
-		* @param {number} rate - The rate at which the allowance is replenished per unit of time.
-		* @param {number} time - The time unit in milliseconds over which the rate is applied.
-		* @param {boolean} infinite - Indicates whether the allowance is infinite or not.
-		*                            If true, the allowance is not limited and remains constant.
-		*                            If false, the allowance is updated based on the rate and time.
-		* @constructor
+	 * @param {number} rate - The rate at which the allowance is replenished per unit of time.
+	 * @param {number} time - The time unit in milliseconds over which the rate is applied.
+	 * @param {boolean} infinite - Indicates whether the allowance is infinite or not.
+	 *                            If true, the allowance is not limited and remains constant.
+	 *                            If false, the allowance is updated based on the rate and time.
+	 * @constructor
 	*/
 	constructor(rate, time, infinite) {
 		this.lastCheck = Date.now();
@@ -25,9 +25,9 @@ class CharQuota {
 		this.infinite = infinite;
 	}
 	/**
-			* Updates the allowance based on the elapsed time since the last check.
-			* Adjusts the allowance according to the rate and time constraints.
-	   */
+	 * Updates the allowance based on the elapsed time since the last check.
+	 * Adjusts the allowance according to the rate and time constraints.
+	*/
 	update() {
 		const currentTime = Date.now();
 		this.allowance += (currentTime - this.lastCheck) * (this.rate / this.time);
@@ -37,12 +37,12 @@ class CharQuota {
 		}
 	}
 	/**
-		* Checks if the specified count can be spent based on the allowance.
-		* If the allowance is infinite, it always returns true.
-		* Otherwise, it updates the allowance and checks if it's sufficient.
-		*
-		* @param {number} count - The count to be spent.
-		* @returns {boolean} - Returns true if the count can be spent, false otherwise.
+	 * Checks if the specified count can be spent based on the allowance.
+	 * If the allowance is infinite, it always returns true.
+	 * Otherwise, it updates the allowance and checks if it's sufficient.
+	 *
+	 * @param {number} count - The count to be spent.
+	 * @returns {boolean} - Returns true if the count can be spent, false otherwise.
 	 */
 	canSpend(count) {
 		if (this.infinite) {
@@ -59,20 +59,20 @@ class CharQuota {
 		return true;
 	}
 	/**
-		* Calculates the time remaining until the allowance is fully restored to the specified rate.
-		* If the allowance is already equal to or greater than the rate, returns 0.
-		*
-		* @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
+	 * Calculates the time remaining until the allowance is fully restored to the specified rate.
+	 * If the allowance is already equal to or greater than the rate, returns 0.
+	 *
+	 * @returns {number} - The time remaining in milliseconds until the allowance is fully restored.
 	*/
 	getTimeToRestore() {
 		if (this.allowance >= this.rate) return 0;
 		return (this.rate - this.allowance) / (this.rate / this.time);
 	}
 	/**
-		* Waits asynchronously until the allowance is fully restored to the specified rate.
-		* It uses the getTimeToRestore method to determine the wait time.
-		*
-		* @returns {Promise<void>} - Resolves once the allowance is fully restored.
+	 * Waits asynchronously until the allowance is fully restored to the specified rate.
+	 * It uses the getTimeToRestore method to determine the wait time.
+	 *
+	 * @returns {Promise<void>} - Resolves once the allowance is fully restored.
 	*/
 	async waitUntilRestore() {
 		const restoreTime = this.getTimeToRestore();
@@ -779,7 +779,8 @@ class Client extends EventEmitter {
 }
 
 if (isBrowser) window.OWOTjs = {
-	Client: Client,
+	Client,
+	CharQuota,
 	Tiles,
 	TileSystem
 }
