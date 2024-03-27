@@ -27,7 +27,8 @@ bot.on("join", () => {
 `nickname` - client nickname  
 `world` - world  (default: `main`)  
 `token` - uvias token  
-`log` - logging enabled or not (default: `true`)
+`log` - logging enabled or not (default: `true`)  
+`hide` - hide user from the online users (default: `false`)
 # Module
 ### Requiring the library returns an object with:  
 `Client` - main client class  
