@@ -7,7 +7,6 @@ REQUIRES NODE.JS 12.0+!
 # Example
 ```js
 const OWOTjs = require("owot-js");
-
 var bot = new OWOTjs.Client();
 
 bot.on("join", () => {
