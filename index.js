@@ -754,6 +754,9 @@ class Client extends EventEmitter {
 				charX = Math.abs(charX);
 				charY = Math.abs(charY);
 
+				if (x < 0 && charX > 0) charX = 16 - charX;
+				if (y < 0 && charY > 0) charY = 8 - charY;
+
 				return [tileX, tileY, charX, charY];
 			},
 			/**
