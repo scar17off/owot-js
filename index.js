@@ -305,7 +305,6 @@ class Client extends EventEmitter {
 		}
 		this.net.ws.onmessage = (msg) => {
 			let data = JSON.parse(msg.data);
-
 			if (data.kind == "chathistory") {
 				this.emit("chathistory", data.global_chat_prev, data.page_chat_prev);
 			}
@@ -599,7 +598,7 @@ class Client extends EventEmitter {
 				if (typeof charX === 'undefined' && typeof charY === 'undefined') {
 					[tileX, tileY, charY, charX] = this.util.convertXY(tileX, tileY);
 				}
-
+				if (this.net.sequence > 10000) this.net.sequence = 0;
 				return [
 					tileY,
 					tileX,
@@ -607,7 +606,7 @@ class Client extends EventEmitter {
 					charX,
 					Date.now(),
 					char,
-					this.net.ws.sequence++,
+					this.net.sequence++,
 					color,
 					bgColor,
 				];
