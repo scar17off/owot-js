@@ -509,9 +509,10 @@ class Client extends EventEmitter {
 			 * @param {number} charX - The x-coordinate of the character within its tile.
 			 * @param {number} charY - The y-coordinate of the character within its tile.
 			 * @returns {boolean} - Returns true if the WebSocket connection is open, the character is different from the existing one,
+			 * @param {string} bgColor - The background color of the character.
 			 *                     the player has enough quota to spend, and the message is added to the write buffer successfully; otherwise, returns false.
 			 */
-			writeChar: (char = ' ', color, tileX, tileY, charX, charY) => {
+			writeChar: (char = ' ', color, tileX, tileY, charX, charY, bgColor) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 				if (!this.player.quota.canSpend(1)) return false;
 				if (color) this.player.color = color;
@@ -522,7 +523,7 @@ class Client extends EventEmitter {
 
 				if (Tiles.getChar(charX, charY, this.world.getTile(tileX, tileY)) == char) return false;
 
-				const editItem = this.world.createEditItem(char, color, tileX, tileY, charX, charY);
+				const editItem = this.world.createEditItem(char, color, tileX, tileY, charX, charY, bgColor);
 				this.net.writeBuffer.push(editItem);
 
 				return true;
@@ -536,9 +537,10 @@ class Client extends EventEmitter {
 			 * @param {number} tileY - The y-coordinate of the tile where the string will start.
 			 * @param {number} charX - The x-coordinate of the first character within its tile.
 			 * @param {number} charY - The y-coordinate of the first character within its tile.
+			 * @param {string} bgColor - The background color of the character.
 			 * @returns {boolean} - Returns true if all characters are added to the write buffer successfully; otherwise, returns false.
 			 */
-			writeString: async (str = ' ', color, tileX, tileY, charX, charY) => {
+			writeString: async (str = ' ', color, tileX, tileY, charX, charY, bgColor) => {
 				if (this.net.ws.readyState !== WebSocket.OPEN) return false;
 				if (color) this.player.color = color;
 
@@ -565,7 +567,7 @@ class Client extends EventEmitter {
 							y += offsetY;
 							const [newTileX, newTileY, newCharX, newCharY] = this.util.convertXY(x, y);
 
-							const editItem = this.world.createEditItem(char, this.player.color, newTileX + tileOffsetX, newTileY, newCharX, newCharY);
+							const editItem = this.world.createEditItem(char, this.player.color, newTileX + tileOffsetX, newTileY, newCharX, newCharY, bgColor);
 							this.net.writeBuffer.push(editItem);
 
 							offsetX++;
@@ -588,9 +590,10 @@ class Client extends EventEmitter {
 			 * @param {number} tileY - The y-coordinate of the tile to be edited.
 			 * @param {number} charX - The x-coordinate of the character within the tile.
 			 * @param {number} charY - The y-coordinate of the character within the tile.
+			 * @param {string} bgColor - The background color of the character.
 			 * @returns {object} - Returns an object containing the edit message.
 			 */
-			createEditItem: (char = ' ', color, tileX, tileY, charX, charY) => {
+			createEditItem: (char = ' ', color, tileX, tileY, charX, charY, bgColor) => {
 				if (color) this.player.color = color;
 
 				if (typeof charX === 'undefined' && typeof charY === 'undefined') {
@@ -602,10 +605,11 @@ class Client extends EventEmitter {
 					tileX,
 					charY,
 					charX,
-					color,
+					Date.now(),
 					char,
 					this.net.ws.sequence++,
-					color
+					color,
+					bgColor,
 				];
 			},
 			/**
@@ -750,7 +754,7 @@ class Client extends EventEmitter {
 				let tileY = Math.floor(y / 8);
 				let charX = x % 16;
 				let charY = y % 8;
-
+                
 				charX = Math.abs(charX);
 				charY = Math.abs(charY);
 
