@@ -559,6 +559,7 @@ class Client extends EventEmitter {
 						const char = chunk.charAt(i);
 						if (char === '\n') {
 							offsetX = 0;
+							tileOffsetX = 0;
 							offsetY++;
 						} else {
 							let [x, y] = this.util.convertPosition(tileX, tileY, charX, charY);
